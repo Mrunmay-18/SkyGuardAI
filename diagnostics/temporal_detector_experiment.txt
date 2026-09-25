@@ -1,0 +1,143 @@
+======================================================================
+SkyGuard AI - STEP 16-F: Temporal Detector Experiment
+======================================================================
+
+--- Parameters (fixed, NOT tuned on test data) ---
+  Windows:  [4, 8, 16]
+  k_high:   3.0  (per-row 3-sigma threshold)
+  k_low:    1.0  (persistence threshold)
+  M:        8  consecutive samples (2 hours)
+  Min bin samples: 10 (fallback to 3-hour block)
+
+  Baselines computed from: data/normal_aws_data.csv
+
+--- Baseline Summary ---
+
+  Station AWS_01:
+    temp_change_4 (global): mean=-0.0003, std=1.4912
+    temp_change_8 (global): mean=0.0015, std=2.5764
+    temp_change_16 (global): mean=0.0141, std=4.6690
+    Hour-conditioned temp_change_16 std: min=1.3321, median=1.6063, max=1.9634
+    Hour-conditioned temp_change_16 mean: min=-5.9767, median=0.0406, max=6.3267
+
+  Station AWS_02:
+    temp_change_4 (global): mean=0.0003, std=1.5183
+    temp_change_8 (global): mean=0.0038, std=2.6267
+    temp_change_16 (global): mean=0.0183, std=4.7650
+    Hour-conditioned temp_change_16 std: min=1.3769, median=1.7355, max=2.0985
+    Hour-conditioned temp_change_16 mean: min=-6.0681, median=-0.2489, max=6.3296
+
+  Station AWS_03:
+    temp_change_4 (global): mean=0.0022, std=1.6245
+    temp_change_8 (global): mean=0.0082, std=2.8826
+    temp_change_16 (global): mean=0.0261, std=5.2695
+    Hour-conditioned temp_change_16 std: min=1.2811, median=1.5438, max=1.7640
+    Hour-conditioned temp_change_16 mean: min=-7.4860, median=0.1211, max=7.1328
+
+  Station AWS_04:
+    temp_change_4 (global): mean=-0.0011, std=1.4327
+    temp_change_8 (global): mean=0.0016, std=2.4206
+    temp_change_16 (global): mean=0.0142, std=4.3092
+    Hour-conditioned temp_change_16 std: min=1.3000, median=1.6234, max=1.9481
+    Hour-conditioned temp_change_16 mean: min=-5.8623, median=0.2835, max=5.4285
+
+  Station AWS_05:
+    temp_change_4 (global): mean=-0.0082, std=1.4945
+    temp_change_8 (global): mean=-0.0131, std=2.5663
+    temp_change_16 (global): mean=-0.0133, std=4.6280
+    Hour-conditioned temp_change_16 std: min=1.3807, median=1.7063, max=2.1640
+    Hour-conditioned temp_change_16 mean: min=-6.2420, median=-0.0214, max=5.8373
+
+--- Aggregate Results ---
+  Total rows: 14388
+
+  Metric          Level 1 only       Level 1+2
+  --------------------------------------------
+  TP                        13              39
+  FP                       143             975
+  FN                       127             101
+  TN                     14105           13273
+  Precision             0.0833          0.0385
+  Recall                0.0929          0.2786
+  F1                    0.0878          0.0676
+
+--- Per-Anomaly-Type Detection ---
+  anomaly_type                     total   L1_det   L2_det  total_det     rate
+  ----------------------------------------------------------------------------
+  calibration_drift                   96        2       22         23   24.0%
+  frozen_sensor                       24        0        2          2    8.3%
+  multivariate_inconsistency           6        0        3          3   50.0%
+  normal                           14104      136      847        953    6.8%
+  normal_weather_event               144        7       19         22   15.3%
+  power_failure                        4        4        0          4  100.0%
+  temperature_drop                     5        4        0          4   80.0%
+  temperature_spike                    5        3        0          3   60.0%
+
+--- IF False-Negative Recovery ---
+  Total IF false negatives: 104
+  Matched in temporal output: 104
+
+  anomaly_type                     IF_missed   temporal_recovered   recovery_rate
+  -------------------------------------------------------------------------------
+  calibration_drift                       84                   20          23.8%
+  frozen_sensor                           16                    1           6.2%
+  multivariate_inconsistency               2                    1          50.0%
+  temperature_spike                        2                    1          50.0%
+
+  Explicit:
+    calibration_drift: 20 / 84 recovered
+    frozen_sensor:     1 / 16 recovered
+
+--- False-Alarm Rates ---
+  normal                     total= 14104  flagged=   953  false_alarm_rate=6.76%
+  normal_weather_event       total=   144  flagged=    22  false_alarm_rate=15.28%
+
+--- Example Rows ---
+
+  5 recovered calibration_drift rows:
+              timestamp station_id  temp_change_16  temporal_z_16                                                                  temporal_reason
+    2026-01-12 01:00:00     AWS_04       -6.787895      -1.776383                                                  level1: |z_4|=3.1; level2: none
+    2026-01-12 02:15:00     AWS_04       -5.537368      -1.728954              level1: none; level2: z_8 sustained <-1.0 for 8 consecutive samples
+    2026-01-12 02:30:00     AWS_04       -5.285263      -1.574427 level1: none; level2: z_8 sustained <-1.0 for 9 consecutive samples; level2: ...
+    2026-01-12 02:45:00     AWS_04       -5.043158      -1.426030             level1: none; level2: z_16 sustained <-1.0 for 9 consecutive samples
+    2026-01-12 03:00:00     AWS_04       -3.541053      -1.268111            level1: none; level2: z_16 sustained <-1.0 for 10 consecutive samples
+
+  5 still-missed calibration_drift rows:
+              timestamp station_id  temp_change_16  temporal_z_16            temporal_reason
+    2026-01-12 00:45:00     AWS_04       -4.820000       0.110913 level1: none; level2: none
+    2026-01-12 01:15:00     AWS_04       -7.185789      -2.034950 level1: none; level2: none
+    2026-01-12 01:30:00     AWS_04       -7.153684      -2.014087 level1: none; level2: none
+    2026-01-12 01:45:00     AWS_04       -6.561579      -1.629315 level1: none; level2: none
+    2026-01-12 02:00:00     AWS_04       -5.719474      -1.840574 level1: none; level2: none
+
+  5 false-alarm rows on normal_weather_event:
+              timestamp station_id  temp_change_16  temporal_z_16                                                                  temporal_reason
+    2026-01-26 01:00:00     AWS_02           -9.23      -3.115338 level1: |z_4|=3.5; |z_16|=3.1; level2: z_16 sustained <-1.0 for 13 consecutiv...
+    2026-01-26 01:00:00     AWS_05           -8.65      -2.760238                                       level1: |z_4|=3.9; |z_8|=3.3; level2: none
+    2026-01-26 01:15:00     AWS_02           -9.74      -3.443853 level1: |z_4|=3.9; |z_16|=3.4; level2: z_16 sustained <-1.0 for 14 consecutiv...
+    2026-01-26 01:15:00     AWS_05           -8.33      -2.544882                                                  level1: |z_4|=4.6; level2: none
+    2026-01-26 01:30:00     AWS_01          -10.26      -3.203974                                      level1: |z_4|=3.4; |z_16|=3.2; level2: none
+
+  5 false-alarm rows on normal:
+              timestamp station_id  temp_change_16  temporal_z_16                                                     temporal_reason
+    2026-01-01 04:00:00     AWS_01           -1.63      -0.945023                                     level1: |z_4|=3.2; level2: none
+    2026-01-01 04:15:00     AWS_03           -0.57      -0.442778  level1: none; level2: z_8 sustained >1.0 for 8 consecutive samples
+    2026-01-01 04:30:00     AWS_03            1.65       1.214374  level1: none; level2: z_8 sustained >1.0 for 9 consecutive samples
+    2026-01-01 05:30:00     AWS_01           -0.82      -1.329389 level1: none; level2: z_8 sustained <-1.0 for 8 consecutive samples
+    2026-01-01 05:45:00     AWS_01           -1.70      -1.777583 level1: none; level2: z_8 sustained <-1.0 for 9 consecutive samples
+
+======================================================================
+CONCLUSION (factual — no editorializing)
+======================================================================
+
+A. How many of the 84 IF-missed calibration-drift rows did the temporal detector recover?
+   20 / 84
+
+B. How many of the 16 IF-missed frozen-sensor rows did the temporal detector recover?
+   1 / 16
+
+C. What is the false-alarm rate on normal_weather_event?
+   22 / 144 = 15.28%
+
+D. What is the false-alarm rate on normal?
+   953 / 14104 = 6.76%

@@ -1,0 +1,106 @@
+======================================================================
+SkyGuard AI - Calibration Drift Inspection
+======================================================================
+
+Loaded test data:   14388 rows from data/test_injected_aws.csv
+Loaded normal data: 14400 rows from data/normal_aws_data.csv
+
+----------------------------------------------------------------------
+Calibration Drift Overview
+----------------------------------------------------------------------
+Number of calibration_drift rows: 96
+Station ID:                       AWS_04
+Start timestamp:                  2026-01-12 00:45:00
+End timestamp:                    2026-01-13 00:30:00
+Duration:                          0 days 23:45:00
+Starting temperature:             17.49 C
+Ending temperature:               20.90 C
+Total temperature change:         3.41 C
+
+----------------------------------------------------------------------
+Temporal Characteristics of Calibration Drift
+----------------------------------------------------------------------
+Temperature difference between consecutive rows (d_temp):
+  Total change (sum of d_temp):     3.4100 C
+  Average change per 15-min obs:    0.0359 C
+  Approximate change per hour:      0.1436 C
+  Min consecutive difference:       -2.0179 C
+  Max consecutive difference:       1.5421 C
+  Consistent direction?             No
+  Number of positive changes:       55
+  Number of negative changes:        40
+  Number of zero changes:           0
+
+----------------------------------------------------------------------
+Rolling Temporal Features (inspection only, NOT used for predictions)
+----------------------------------------------------------------------
+  Window = 4 samples (1.0 hours):
+    Rolling temperature mean  - mean=23.7705, median=24.1001, min=15.4003, max=29.6511, std=3.8458, n=93
+    Rolling temperature change - mean=0.2122, median=0.1734, min=-2.6916, max=2.9084, std=1.3458, n=92
+  Window = 8 samples (2.0 hours):
+    Rolling temperature mean  - mean=24.0100, median=24.3085, min=15.7382, max=29.2411, std=3.6586, n=89
+    Rolling temperature change - mean=0.4907, median=0.6968, min=-4.4932, max=4.3568, std=2.2449, n=88
+  Window = 16 samples (4.0 hours):
+    Rolling temperature mean  - mean=24.4848, median=24.9684, min=16.8052, max=28.5657, std=3.2074, n=81
+    Rolling temperature change - mean=1.0674, median=2.2537, min=-6.4863, max=7.4037, std=3.8575, n=80
+
+----------------------------------------------------------------------
+Comparison: Normal vs Calibration-Drift (station AWS_04)
+----------------------------------------------------------------------
+
+  Consecutive d_temp (1-sample diff):
+    Normal: mean=-0.0008, median=0.0000, min=-2.6900, max=2.3400, std=0.7595, n=2879
+    Drift:  mean=0.0359, median=0.1421, min=-2.0179, max=1.5421, std=0.7204, n=95
+
+  4-sample temperature change (1.0h):
+    Normal: mean=-0.0011, median=-0.0350, min=-4.7600, max=4.4900, std=1.4325, n=2876
+    Drift:  mean=0.2122, median=0.1734, min=-2.6916, max=2.9084, std=1.3458, n=92
+
+  8-sample temperature change (2.0h):
+    Normal: mean=0.0016, median=0.0600, min=-7.3600, max=6.5900, std=2.4201, n=2872
+    Drift:  mean=0.4907, median=0.6968, min=-4.4932, max=4.3568, std=2.2449, n=88
+
+  16-sample temperature change (4.0h):
+    Normal: mean=0.0142, median=0.3900, min=-10.4900, max=9.8500, std=4.3085, n=2864
+    Drift:  mean=1.0674, median=2.2537, min=-6.4863, max=7.4037, std=3.8575, n=80
+
+----------------------------------------------------------------------
+Isolation Forest Scores for Calibration-Drift Rows
+----------------------------------------------------------------------
+  Drift rows matched in IF predictions: 96 / 96
+  Min IF score:    -0.0485
+  Max IF score:    0.0920
+  Mean IF score:   0.0404
+  Median IF score: 0.0483
+  Detected (predicted_anomaly=1): 12
+  Missed (predicted_anomaly=0):   84
+
+======================================================================
+CONCLUSION
+======================================================================
+
+A. Is there a clear gradual temporal pattern in calibration drift?
+   The temperature changes from 17.49 C to 20.90 C over 96 observations (0 days 23:45:00).
+   The average change per observation is 0.0359 C (approximately 0.14 C/hour).
+   55 of 95 consecutive differences are positive, 40 are negative, 0 are zero.
+   The drift has a positive trend: 57.9% of consecutive changes are positive. The 40 negative changes are small reversals from noise on top of the drift ramp.
+
+B. Does the temporal pattern appear different from normal AWS_04 behavior?
+   Normal consecutive d_temp: mean=-0.0008 C, std=0.7595 C
+   Drift consecutive d_temp:  mean=0.0359 C, std=0.7204 C
+   Normal 16-sample change: mean=0.0142 C, std=4.3085
+   Drift 16-sample change:  mean=1.0674 C, std=3.8575
+   Yes - the drift period shows a positive mean 16-sample change (1.0674 C) vs normal (0.0142 C).
+
+C. Which simple temporal measurements show the clearest difference?
+    1-sample change ( 0.2h): normal_mean=-0.0008, drift_mean=+0.0359, normal_std=0.7595, separation=0.05 sigma
+    4-sample change ( 1.0h): normal_mean=-0.0011, drift_mean=+0.2122, normal_std=1.4325, separation=0.15 sigma
+    8-sample change ( 2.0h): normal_mean=+0.0016, drift_mean=+0.4907, normal_std=2.4201, separation=0.20 sigma
+   16-sample change ( 4.0h): normal_mean=+0.0142, drift_mean=+1.0674, normal_std=4.3085, separation=0.24 sigma
+   The 16-sample change shows the clearest separation (0.24 sigma between drift and normal means).
+
+D. Based only on this inspection, is it reasonable to investigate a temporal detector next?
+   The drift produces a measurable positive bias in rolling temperature change that is not present in normal data.
+   The 16-sample change shows 0.24 sigma separation between drift and normal periods.
+   Yes - it is reasonable to investigate a temporal detector that examines rolling change features, based on the measurable signal observed in this inspection.
+   (No claim is made about which specific model architecture would be appropriate; this is an inspection-only result.)

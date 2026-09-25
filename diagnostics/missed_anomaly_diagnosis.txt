@@ -1,0 +1,78 @@
+======================================================================
+SkyGuard AI - STEP 16-D: IF False Negative Diagnostic
+======================================================================
+
+Loaded IF predictions: 14383 rows from data/isolation_forest_predictions.csv
+Loaded test data:      14388 rows from data/test_injected_aws.csv
+
+IF false negatives (is_anomaly=1 AND predicted_anomaly=0): 104 rows
+
+Computing QC flags at runtime via apply_qc_rules()...
+  QC flags computed: 14388 rows
+
+Computing spatial flags at runtime via apply_spatial_analysis()...
+  spatial flags computed
+
+----------------------------------------------------------------------
+Evidence coverage among IF false negatives
+----------------------------------------------------------------------
+Total IF false negatives:                      104
+Recoverable by ANY non-IF evidence:              11
+QC catches (qc_any_flag == 1):                   11
+  - qc_range_flag:                               0
+  - qc_temporal_flag:                            0
+  - qc_persistence_flag:                          11
+  - qc_internal_flag:                            0
+  - qc_gap_flag:                                 0
+Spatial isolated catches:                        0
+Spatial common-event rows (counter-evidence):    0
+
+----------------------------------------------------------------------
+Per-anomaly-type breakdown
+----------------------------------------------------------------------
+  anomaly_type                     missed    recov   range    temp   persist   intern    gap   sp_iso
+  ---------------------------------------------------------------------------------------------------
+  calibration_drift                    84        0       0       0         0        0      0        0
+  frozen_sensor                        16       11       0       0        11        0      0        0
+  multivariate_inconsistency            2        0       0       0         0        0      0        0
+  temperature_spike                     2        0       0       0         0        0      0        0
+
+----------------------------------------------------------------------
+Example RECOVERED IF false negatives (non-IF evidence catches them)
+----------------------------------------------------------------------
+  2026-01-09 02:45:00  AWS_03  frozen_sensor                   evidence: qc_persistence
+  2026-01-09 03:15:00  AWS_03  frozen_sensor                   evidence: qc_persistence
+  2026-01-09 03:30:00  AWS_03  frozen_sensor                   evidence: qc_persistence
+  2026-01-09 03:45:00  AWS_03  frozen_sensor                   evidence: qc_persistence
+  2026-01-09 04:00:00  AWS_03  frozen_sensor                   evidence: qc_persistence
+
+----------------------------------------------------------------------
+Example UNRECOVERED IF false negatives (no non-IF evidence catches them)
+----------------------------------------------------------------------
+  2026-01-03 00:45:00  AWS_01  temperature_spike
+  2026-01-03 01:00:00  AWS_01  temperature_spike
+  2026-01-09 01:00:00  AWS_03  frozen_sensor
+  2026-01-09 01:15:00  AWS_03  frozen_sensor
+  2026-01-09 01:30:00  AWS_03  frozen_sensor
+
+======================================================================
+CONCLUSION
+======================================================================
+
+A. How many IF false negatives are recoverable using EXISTING QC evidence?
+   11 out of 104 (10.6%) are recoverable by QC rules.
+
+B. How many are recoverable using EXISTING spatial evidence?
+   0 out of 104 (0.0%) are recoverable by spatial isolated-deviation.
+
+C. Which anomaly types remain almost completely undetected even with all current evidence?
+   calibration_drift: 0/84 recoverable (0.0%).
+   multivariate_inconsistency: 0/2 recoverable (0.0%).
+   temperature_spike: 0/2 recoverable (0.0%).
+
+D. Does the current evidence justify changing the fusion layer, or does the evidence indicate that an upstream detector needs improvement?
+   The biggest contributor to IF false negatives is calibration_drift (84/104 = 80.8% of all misses).
+   Of those, only 0/84 (0.0%) are recoverable by current QC+spatial evidence.
+   Since 80.8% of remaining misses are calibration_drift, and current detectors recover only 0.0% of those, no current detector adequately addresses calibration_drift.
+   An upstream detector improvement is likely needed to capture slow, gradual drift that the current per-row QC and spatial evidence do not recover.
+   The current evidence provides limited recovery for these misses, so an upstream detector improvement should be investigated before changing fusion weights.
