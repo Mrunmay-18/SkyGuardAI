@@ -134,8 +134,7 @@ def calculate_sensor_health(
           supporting_temporal_drift_count, missing_count,
           frozen_count, failure_count,
           maintenance_risk_indicator, maintenance_status,
-          maintenance_health_reason.
-
+          maintenance_health_reason, maintenance_recommendation.
     Ground-truth columns (is_anomaly, anomaly_type,
     injected_parameter) are NOT used for scoring. No future
     information is used.
@@ -186,6 +185,13 @@ def calculate_sensor_health(
 
     # Failure: anomaly_class == "Communication Failure".
     is_failure = (anomaly_class == "Communication Failure").astype(int)
+    
+    # Spatial context: row-level flags so groupby can aggregate per station.
+    # spatial_iso is already computed above; spatial_common may or may not
+    # exist depending on spatial_analysis.py.
+    spatial_common_row = _safe_int_arr(
+        out, "spatial_common_event_flag", len(out)
+    )
 
     # Gap flags: qc_gap_flag == 1 (annotates the row PRECEDING a gap,
     # not the missing row itself — this is a gap-flag count, not a
@@ -201,8 +207,9 @@ def calculate_sensor_health(
     out["_is_frozen"] = is_frozen
     out["_is_failure"] = is_failure
     out["_is_gap_flag"] = is_gap_flag
-    out["_is_supporting_drift"] = is_supporting_drift
-
+    out["_is_supporting_drift"] = is_supporting_drift   
+    out["_spatial_isolated_row"] = spatial_iso
+    out["_spatial_common_row"] = spatial_common_row
     # Aggregate per station.
     rows = []
     for sid, g in out.groupby("station_id"):
@@ -214,6 +221,10 @@ def calculate_sensor_health(
         missing_count = int(g["_is_gap_flag"].sum())
         frozen_count = int(g["_is_frozen"].sum())
         failure_count = int(g["_is_failure"].sum())
+        
+        # Station-level spatial context (any isolated / any common event).
+        spatial_isolated = bool(int(g["_spatial_isolated_row"].max()) == 1)
+        spatial_common = bool(int(g["_spatial_common_row"].max()) == 1)
 
         # Normalized rates (clamped to [0, 1]).
         norm_anomaly = min(
@@ -260,6 +271,16 @@ def calculate_sensor_health(
             drift_count, frozen_count, missing_count,
             failure_count,
         )
+        
+        recommendation = _build_recommendation(
+            anomaly_count=anomaly_count,
+            drift_count=drift_count,
+            frozen_count=frozen_count,
+            gap_count=missing_count,
+            failure_count=failure_count,
+            spatial_isolated=spatial_isolated,
+            spatial_common=spatial_common,
+        )
 
         rows.append({
             "station_id": sid,
@@ -274,6 +295,7 @@ def calculate_sensor_health(
             "maintenance_risk_indicator": risk,
             "maintenance_status": status,
             "maintenance_health_reason": reason,
+            "maintenance_recommendation": recommendation,
         })
 
     result = pd.DataFrame(rows)
@@ -336,7 +358,42 @@ def _build_reason(
             "Elevated maintenance risk indicator computed, but "
             "no individual evidence component dominates."
         )
+# ----------------------------------------------------------------------
+# Recommendation builder
+# ----------------------------------------------------------------------
+def _build_recommendation(
+    anomaly_count: int,
+    drift_count: int,
+    frozen_count: int,
+    gap_count: int,
+    failure_count: int,
+    spatial_isolated: bool,
+    spatial_common: bool,
+) -> str:
+    """
+    Rule-based maintenance recommendation from observed evidence.
 
+    Priority order: most specific evidence first, then spatial
+    context, then generic. This is a decision-support recommendation,
+    not a guaranteed diagnosis.
+    """
+    if drift_count > 0 and spatial_isolated:
+        return "Inspect/calibrate the affected sensor."
+    if frozen_count > 0:
+        return "Inspect sensor for stuck/frozen value and check sensor health."
+    if failure_count > 0 or gap_count > 0:
+        return "Check station power, connectivity, and data transmission."
+    if drift_count > 0:
+        return ("Inspect sensor calibration and compare with a "
+                "reference measurement.")
+    if anomaly_count > 0 and spatial_isolated:
+        return "Inspect the affected station/sensor."
+    if spatial_common:
+        return ("Cross-check nearby stations and regional weather "
+                "information before initiating sensor maintenance.")
+    if anomaly_count > 0:
+        return "Schedule sensor inspection/maintenance."
+    return "Continue routine monitoring."
 
 # ----------------------------------------------------------------------
 # Demo
@@ -427,6 +484,8 @@ if __name__ == "__main__":
         print(f"  Status: {row['maintenance_status']}")
         print(f"\n  Reason:")
         print(f"    {row['maintenance_health_reason']}")
+        print(f"\n  Recommendation:")
+        print(f"    {row['maintenance_recommendation']}")
         print()
 
     # Summary.

@@ -65,8 +65,13 @@ class FusionConfig:
     WEIGHT_SPATIAL_COMMON_EVENT: float = -0.8  # Spatial common event = weather
 
     # ---- Decision thresholds ----
-    SCORE_HIGH: float = 2.0
-    SCORE_MEDIUM: float = 1.0
+       # ---- Decision thresholds ----
+    # A single evidence source firing at weight 1.0-1.2 should NOT
+    # trigger an alert on its own. Require corroboration:
+    #   - High:   any 2 sources, OR one strong source + counter-evidence absent
+    #   - Medium: two independent weak sources, OR one very strong signal
+    SCORE_HIGH: float = 2.5
+    SCORE_MEDIUM: float = 1.6
 
 
 # ----------------------------------------------------------------------

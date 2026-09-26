@@ -66,7 +66,7 @@ class SpatialConfig:
     # median z-score by more than this AND the target z-score is outside
     # the neighbour z-score envelope. This is an OPERATIONAL HEURISTIC,
     # not a formal standard.
-    SPATIAL_Z_TOL: float = 2.5
+    SPATIAL_Z_TOL: float = 4.5
 
     # DEPRECATED (kept for backward compatibility only).
     # The isolated-deviation check no longer reads these - it uses

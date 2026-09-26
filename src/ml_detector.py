@@ -97,8 +97,7 @@ def train_isolation_forest(normal_csv: str = NORMAL_CSV) -> IsolationForest:
       3. Select the 6 BASELINE_FEATURE_COLUMNS.
       4. Drop rows where any baseline feature is NaN (the first row of
          each station has NaN d_* by design - we do NOT fill with 0).
-      5. Fit IsolationForest(n_estimators=200, contamination="auto",
-         random_state=42) on the 6 features.
+      5. Fit IsolationForest(n_estimators=200, contamination=0.02,random_state=42) on the 6 features.
 
     Returns
     -------
@@ -125,7 +124,7 @@ def train_isolation_forest(normal_csv: str = NORMAL_CSV) -> IsolationForest:
     # 5. Fit Isolation Forest with baseline (NOT tuned) parameters.
     model = IsolationForest(
         n_estimators=200,
-        contamination="auto",
+        contamination=0.02,   # ~2% expected anomaly rate
         random_state=RANDOM_STATE,
     )
     model.fit(X_train)
@@ -279,8 +278,8 @@ def evaluate_predictions(pred_df: pd.DataFrame) -> None:
     print(f"  true anomaly   | pred normal: {cm[1, 0]:>6}  "
           f"pred anomaly: {cm[1, 1]:>6}")
 
-    # zero_division=0 so we get 0.0 instead of a crash when nothing is
-    # predicted as anomaly (likely with contamination="auto").
+       # zero_division=0 so we get 0.0 instead of a crash when nothing is
+    # predicted as anomaly (contamination=0.02 sets the expected rate).
     precision = precision_score(y_true, y_pred, zero_division=0)
     recall = recall_score(y_true, y_pred, zero_division=0)
     f1 = f1_score(y_true, y_pred, zero_division=0)
@@ -289,7 +288,7 @@ def evaluate_predictions(pred_df: pd.DataFrame) -> None:
     print(f"Recall   : {recall:.4f}")
     print(f"F1-score : {f1:.4f}")
 
-    print("\nNote: contamination='auto' is used only as a baseline setting.")
+    print("\nNote: contamination='0.02' is used only as a baseline setting.")
     print("These results are not considered optimal. Further experiments")
     print("will evaluate whether additional features, QC rules, or")
     print("hyperparameter tuning improve anomaly detection performance.")
