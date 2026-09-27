@@ -280,7 +280,105 @@ def compute_weather_event_analysis(df: pd.DataFrame) -> dict:
         }
     return result
 
+def compute_per_severity_breakdown(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute precision/recall per severity tier (High, Medium, Low).
+    """
+    if "severity" not in df.columns:
+        return pd.DataFrame()
 
+    rows = []
+    for sev in ["High", "Medium", "Low"]:
+        sub = df[df["severity"] == sev]
+        if len(sub) == 0:
+            continue
+        y_true = sub["is_anomaly"].fillna(0).astype(int)
+        y_pred = sub["predicted_anomaly"].fillna(0).astype(int)
+        tp = int(((y_true == 1) & (y_pred == 1)).sum())
+        fp = int(((y_true == 0) & (y_pred == 1)).sum())
+        fn = int(((y_true == 1) & (y_pred == 0)).sum())
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        rows.append({
+            "severity": sev,
+            "n_alerts": tp + fp,
+            "tp": tp,
+            "fp": fp,
+            "fn": fn,
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+        })
+    return pd.DataFrame(rows)
+
+
+def compute_per_station_breakdown(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute precision/recall per station.
+    """
+    if "station_id" not in df.columns:
+        return pd.DataFrame()
+
+    rows = []
+    for sid in sorted(df["station_id"].unique()):
+        sub = df[df["station_id"] == sid]
+        y_true = sub["is_anomaly"].fillna(0).astype(int)
+        y_pred = sub["predicted_anomaly"].fillna(0).astype(int)
+        tp = int(((y_true == 1) & (y_pred == 1)).sum())
+        fp = int(((y_true == 0) & (y_pred == 1)).sum())
+        fn = int(((y_true == 1) & (y_pred == 0)).sum())
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        rows.append({
+            "station_id": sid,
+            "n_alerts": tp + fp,
+            "tp": tp,
+            "fp": fp,
+            "fn": fn,
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+        })
+    return pd.DataFrame(rows)
+
+
+def compute_confidence_calibration(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Check whether confidence score correlates with accuracy.
+    Buckets: High (80-100), Medium (50-79), Low (0-49)
+    """
+    if "anomaly_confidence" not in df.columns:
+        return pd.DataFrame()
+
+    alerts = df[df["predicted_anomaly"] == 1].copy()
+    if len(alerts) == 0:
+        return pd.DataFrame()
+
+    def bucket(c):
+        try:
+            c = int(c)
+        except (TypeError, ValueError):
+            return "Unknown"
+        if c >= 80:
+            return "High (80-100)"
+        if c >= 50:
+            return "Medium (50-79)"
+        return "Low (0-49)"
+
+    alerts["confidence_bucket"] = alerts["anomaly_confidence"].apply(bucket)
+    rows = []
+    for b in ["High (80-100)", "Medium (50-79)", "Low (0-49)"]:
+        sub = alerts[alerts["confidence_bucket"] == b]
+        if len(sub) == 0:
+            continue
+        correct = int(sub["is_anomaly"].fillna(0).astype(int).sum())
+        total = len(sub)
+        accuracy = correct / total if total > 0 else 0.0
+        rows.append({
+            "confidence_bucket": b,
+            "n_alerts": total,
+            "correct": correct,
+            "accuracy": round(accuracy, 4),
+        })
+    return pd.DataFrame(rows)
 # ----------------------------------------------------------------------
 # Score distribution
 # ----------------------------------------------------------------------
@@ -337,11 +435,103 @@ def compute_score_distribution(df: pd.DataFrame) -> pd.DataFrame:
             })
     return pd.DataFrame(rows)
 
+def compute_per_severity_breakdown(df: pd.DataFrame) -> pd.DataFrame:
+    """Compute precision/recall per severity tier."""
+    if "severity" not in df.columns:
+        return pd.DataFrame()
 
+    rows = []
+    for sev in ["High", "Medium", "Low"]:
+        sub = df[df["severity"] == sev]
+        if len(sub) == 0:
+            continue
+        y_true = sub["is_anomaly"].fillna(0).astype(int)
+        y_pred = sub["predicted_anomaly"].fillna(0).astype(int)
+        tp = int(((y_true == 1) & (y_pred == 1)).sum())
+        fp = int(((y_true == 0) & (y_pred == 1)).sum())
+        fn = int(((y_true == 1) & (y_pred == 0)).sum())
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        rows.append({
+            "severity": sev,
+            "n_alerts": tp + fp,
+            "tp": tp,
+            "fp": fp,
+            "fn": fn,
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+        })
+    return pd.DataFrame(rows)
+
+
+def compute_per_station_breakdown(df: pd.DataFrame) -> pd.DataFrame:
+    """Compute precision/recall per station."""
+    if "station_id" not in df.columns:
+        return pd.DataFrame()
+
+    rows = []
+    for sid in sorted(df["station_id"].unique()):
+        sub = df[df["station_id"] == sid]
+        y_true = sub["is_anomaly"].fillna(0).astype(int)
+        y_pred = sub["predicted_anomaly"].fillna(0).astype(int)
+        tp = int(((y_true == 1) & (y_pred == 1)).sum())
+        fp = int(((y_true == 0) & (y_pred == 1)).sum())
+        fn = int(((y_true == 1) & (y_pred == 0)).sum())
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        rows.append({
+            "station_id": sid,
+            "n_alerts": tp + fp,
+            "tp": tp,
+            "fp": fp,
+            "fn": fn,
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+        })
+    return pd.DataFrame(rows)
+
+
+def compute_confidence_calibration(df: pd.DataFrame) -> pd.DataFrame:
+    """Check whether confidence score correlates with accuracy."""
+    if "anomaly_confidence" not in df.columns:
+        return pd.DataFrame()
+
+    alerts = df[df["predicted_anomaly"] == 1].copy()
+    if len(alerts) == 0:
+        return pd.DataFrame()
+
+    def bucket(c):
+        try:
+            c = int(c)
+        except (TypeError, ValueError):
+            return "Unknown"
+        if c >= 80:
+            return "High (80-100)"
+        if c >= 50:
+            return "Medium (50-79)"
+        return "Low (0-49)"
+
+    alerts["confidence_bucket"] = alerts["anomaly_confidence"].apply(bucket)
+    rows = []
+    for b in ["High (80-100)", "Medium (50-79)", "Low (0-49)"]:
+        sub = alerts[alerts["confidence_bucket"] == b]
+        if len(sub) == 0:
+            continue
+        correct = int(sub["is_anomaly"].fillna(0).astype(int).sum())
+        total = len(sub)
+        accuracy = correct / total if total > 0 else 0.0
+        rows.append({
+            "confidence_bucket": b,
+            "n_alerts": total,
+            "correct": correct,
+            "accuracy": round(accuracy, 4),
+        })
+    return pd.DataFrame(rows)
 # ----------------------------------------------------------------------
 # Formatting (human-readable summary, also written to .txt)
 # ----------------------------------------------------------------------
-def format_summary(agg: dict,
+def format_summary(df: pd.DataFrame,
+                   agg: dict,
                    conf: dict,
                    anomaly_type_df: pd.DataFrame,
                    weather_cat_df: pd.DataFrame,
@@ -439,7 +629,34 @@ def format_summary(agg: dict,
                     f"    n={int(r['n']):>5}"
                     f"    min={r['min']:.4f}    mean={r['mean']:.4f}    max={r['max']:.4f}"
                 )
+    # ------------------ Per-severity breakdown ------------------
+    severity_df = compute_per_severity_breakdown(df)
+    if not severity_df.empty:
+        lines.append("")
+        lines.append("=" * 70)
+        lines.append("PER-SEVERITY BREAKDOWN")
+        lines.append("=" * 70)
+        lines.append(severity_df.to_string(index=False))
 
+    # ------------------ Per-station breakdown ------------------
+    station_df = compute_per_station_breakdown(df)
+    if not station_df.empty:
+        lines.append("")
+        lines.append("=" * 70)
+        lines.append("PER-STATION BREAKDOWN")
+        lines.append("=" * 70)
+        lines.append(station_df.to_string(index=False))
+
+    # ------------------ Confidence calibration ------------------
+    calib_df = compute_confidence_calibration(df)
+    if not calib_df.empty:
+        lines.append("")
+        lines.append("=" * 70)
+        lines.append("CONFIDENCE CALIBRATION")
+        lines.append("=" * 70)
+        lines.append(calib_df.to_string(index=False))
+
+    
     return "\n".join(lines)
 
 
@@ -562,7 +779,7 @@ def main():
 
     # 7. Format the summary text (printed to stdout AND saved to .txt).
     summary_text = format_summary(
-        agg, conf, anomaly_type_df, weather_cat_df,
+        df, agg, conf, anomaly_type_df, weather_cat_df,
         weather_event_analysis, score_dist_df, n_total_rows
     )
     print(summary_text)
