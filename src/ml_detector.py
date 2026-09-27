@@ -66,6 +66,10 @@ BASELINE_FEATURE_COLUMNS = [
     "d_temperature",
     "d_pressure",
     "d_humidity",
+    "hour_sin",
+    "hour_cos",
+    "doy_sin",
+    "doy_cos",
 ]
 
 # Ground-truth columns passed through to the prediction output for later
