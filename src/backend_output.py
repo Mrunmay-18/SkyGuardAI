@@ -349,6 +349,78 @@ def _compute_evidence_breakdown(row) -> dict:
         "decision_basis": decision_basis,
         "counter_evidence": counter_evidence,
     }
+def _compute_counter_reasoning(row) -> dict:
+    """
+    Explicitly reason about whether this is a sensor fault or a genuine
+    weather event, using available spatial counter-evidence.
+
+    Returns:
+        verdict: "sensor_fault" | "possible_weather_event" | "inconclusive"
+        reason:  human-readable sentence
+    """
+    spatial_common = bool(int(row.get("spatial_common_event_flag", 0) or 0))
+    spatial_isolated = bool(int(row.get("spatial_isolated_flag", 0) or 0))
+
+    if spatial_common:
+        return {
+            "verdict": "possible_weather_event",
+            "reason": (
+                "Neighboring stations showed a common change — "
+                "consistent with a regional weather event."
+            ),
+        }
+
+    if spatial_isolated:
+        return {
+            "verdict": "sensor_fault",
+            "reason": (
+                "This station deviated from its neighbors while "
+                "neighbors remained consistent — isolated sensor "
+                "signature, not regional weather."
+            ),
+        }
+
+    return {
+        "verdict": "inconclusive",
+        "reason": (
+            "No spatial counter-evidence available (neighbors "
+            "insufficient or timestamp mismatch)."
+        ),
+    }
+def _compute_trust_score(row, evidence_breakdown: dict) -> int:
+    """
+    Compute a system-level trust score (0-100).
+
+    Higher when:
+      - Multiple independent sources agree
+      - Confidence is high
+      - Counter-evidence is absent
+      - Spatial isolation supports the fault hypothesis
+    """
+    n_fired = sum(1 for d in evidence_breakdown.values() if d.get("fired"))
+    try:
+        conf = int(row.get("anomaly_confidence") or 0)
+    except (TypeError, ValueError):
+        conf = 0
+
+    score = 0
+    score += n_fired * 15               # up to 75 from evidence count
+    score += conf * 0.2                 # up to 20 from confidence
+
+    if bool(int(row.get("spatial_common_event_flag", 0) or 0)):
+        score -= 30                     # penalty for counter-evidence
+    if bool(int(row.get("spatial_isolated_flag", 0) or 0)):
+        score += 5                      # small bonus for isolation
+
+    return max(0, min(100, int(score)))
+def _compute_event_class(row) -> str:
+    """
+    Classify the alert as either a sensor fault or a genuine weather event
+    based on spatial counter-evidence.
+    """
+    if bool(int(row.get("spatial_common_event_flag", 0) or 0)):
+        return "weather"
+    return "sensor_fault"
 # ----------------------------------------------------------------------
 # Public API
 # ----------------------------------------------------------------------
@@ -435,7 +507,9 @@ def build_backend_output(
 
         evidence = _compute_evidence_breakdown(row)
 
-
+        counter_reasoning = _compute_counter_reasoning(row)
+        trust_score = _compute_trust_score(row, evidence["evidence_breakdown"])
+        event_class = _compute_event_class(row)
         alert = {
             "station_id": sid,
             "timestamp": str(row["timestamp"]),
@@ -449,10 +523,13 @@ def build_backend_output(
             "reasons": _build_reasons(row),
             "sensor_health": health_info["sensor_health"],
             "maintenance_recommendation": health_info["maintenance_recommendation"],
-            "priority": priority,
+                       "priority": priority,
             "evidence_breakdown": evidence["evidence_breakdown"],
             "decision_basis": evidence["decision_basis"],
             "counter_evidence": evidence["counter_evidence"],
+            "counter_reasoning": counter_reasoning,
+            "trust_score": trust_score,
+            "event_class": event_class,
             "corrected_temperature": corrected["corrected_temperature"],
             "corrected_pressure": corrected["corrected_pressure"],
             "corrected_humidity": corrected["corrected_humidity"],
