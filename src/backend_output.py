@@ -255,6 +255,100 @@ def _compute_corrected_values(
         "correction_basis": f"median of {len(same_ts)} neighbouring station(s) ({neighbour_str})",
     }
 
+def _compute_priority(severity: str, confidence, spatial_isolated: bool) -> str:
+    """
+    Derive operational priority from severity, confidence, and spatial isolation.
+
+    P1 — urgent: High severity with strong evidence
+    P2 — important: Medium severity or moderate confidence
+    P3 — routine: Low severity or low confidence
+    """
+    sev = str(severity or "").strip().lower()
+    try:
+        conf = int(confidence) if confidence is not None else 0
+    except (TypeError, ValueError):
+        conf = 0
+
+    if sev == "high" and conf >= 80:
+        return "P1"
+    if sev == "high" and conf >= 60 and spatial_isolated:
+        return "P1"
+    if sev == "low" or conf < 50:
+        return "P3"
+    return "P2"
+
+def _compute_evidence_breakdown(row) -> dict:
+    """
+    Extract per-source evidence from a scored row.
+
+    Returns a dict with:
+        evidence_breakdown: per-source flags + key numeric details
+        decision_basis: human-readable count of agreeing sources
+        counter_evidence: text describing counter-evidence (spatial common event)
+    """
+    def _flag(col):
+        try:
+            return bool(int(row.get(col, 0) or 0))
+        except (TypeError, ValueError):
+            return False
+
+    def _num(col):
+        try:
+            v = row.get(col)
+            if v is None:
+                return None
+            return round(float(v), 4)
+        except (TypeError, ValueError):
+            return None
+
+    if_fired = _flag("predicted_anomaly")
+    qc_fired = _flag("qc_any_flag")
+    temporal_fired = _flag("temporal_predicted_anomaly")
+    spatial_isolated = _flag("spatial_isolated_flag")
+    spatial_common = _flag("spatial_common_event_flag")
+
+    breakdown = {
+        "ml_if": {
+            "fired": if_fired,
+            "score": _num("anomaly_score") if if_fired else None,
+            "weight": 1.0,
+        },
+        "qc_any": {
+            "fired": qc_fired,
+            "count": int(row.get("qc_flag_count", 0) or 0),
+            "weight": 0.7,
+        },
+        "temporal": {
+            "fired": temporal_fired,
+            "z_4": _num("temporal_z_4") if temporal_fired else None,
+            "weight": 1.0,
+        },
+        "spatial": {
+            "fired": spatial_isolated,
+            "isolated": spatial_isolated,
+            "weight": 1.2,
+        },
+    }
+
+    fired_sources = [name for name, d in breakdown.items() if d["fired"]]
+    n_fired = len(fired_sources)
+    n_possible = 4
+
+    if n_fired == 0:
+        decision_basis = "no sources fired"
+    else:
+        decision_basis = f"{n_fired} of {n_possible} sources agree: {', '.join(fired_sources)}"
+
+    if spatial_common:
+        counter_evidence = "spatial common event detected (regional weather pattern)"
+    else:
+        counter_evidence = "none"
+
+    return {
+        "evidence_breakdown": breakdown,
+        "decision_basis": decision_basis,
+        "counter_evidence": counter_evidence,
+    }
 # ----------------------------------------------------------------------
 # Public API
 # ----------------------------------------------------------------------
@@ -331,6 +425,16 @@ def build_backend_output(
 
         # Compute self-healing corrected values using neighbours.
         corrected = _compute_corrected_values(row, meta_df, obs_df)
+        corrected = _compute_corrected_values(row, meta_df, obs_df)
+
+        priority = _compute_priority(
+            severity=row.get("severity", ""),
+            confidence=row.get("anomaly_confidence"),
+            spatial_isolated=bool(int(row.get("spatial_isolated_flag", 0) or 0)),
+        )
+
+        evidence = _compute_evidence_breakdown(row)
+
 
         alert = {
             "station_id": sid,
@@ -345,6 +449,10 @@ def build_backend_output(
             "reasons": _build_reasons(row),
             "sensor_health": health_info["sensor_health"],
             "maintenance_recommendation": health_info["maintenance_recommendation"],
+            "priority": priority,
+            "evidence_breakdown": evidence["evidence_breakdown"],
+            "decision_basis": evidence["decision_basis"],
+            "counter_evidence": evidence["counter_evidence"],
             "corrected_temperature": corrected["corrected_temperature"],
             "corrected_pressure": corrected["corrected_pressure"],
             "corrected_humidity": corrected["corrected_humidity"],
@@ -434,6 +542,20 @@ if __name__ == "__main__":
     # Run the fusion layer to get fused_any_flag.
     from evidence_fusion import fuse_evidence
     fused = fuse_evidence(scored)
+        # Save the fused predictions to a CSV so the evaluator can read them.
+    import os
+    os.makedirs("data", exist_ok=True)
+    fused_out_cols = [
+        "timestamp", "station_id", "temperature", "pressure", "humidity",
+        "is_anomaly", "anomaly_type", "injected_parameter",
+        "predicted_anomaly", "anomaly_score",
+        "fused_score", "fused_label", "fused_any_flag",
+        "fused_evidence_count", "fused_counter_evidence",
+        "anomaly_class", "anomaly_confidence", "severity",
+    ]
+    present = [c for c in fused_out_cols if c in fused.columns]
+    fused[present].to_csv("data/fused_predictions.csv", index=False)
+    print(f"[save] Fused predictions saved to data/fused_predictions.csv ({len(fused)} rows)")
 
     explained = explain_dataframe(fused)
     health = calculate_sensor_health(explained)

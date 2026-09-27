@@ -30,7 +30,7 @@ import pandas as pd
 # ----------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------
-DEFAULT_PREDICTIONS = "data/isolation_forest_predictions.csv"
+DEFAULT_PREDICTIONS = "data/fused_predictions.csv"
 DEFAULT_LABELS = "data/test_injected_aws.csv"
 
 RESULTS_DIR = "results"
@@ -76,10 +76,17 @@ def load_predictions(pred_path: str,
         raise FileNotFoundError(f"Predictions CSV not found: {pred_path}")
 
     df = pd.read_csv(pred_path)
+    # Prefer fused_any_flag if present — this is what the system actually outputs.
+    if "fused_any_flag" in df.columns:
+        df["predicted_anomaly"] = df["fused_any_flag"].astype(int)
 
     # Bare minimum required columns (the rest can be joined or evaluated
     # conditionally).
-    required_min = ["timestamp", "station_id", "predicted_anomaly"]
+        required_min = ["timestamp", "station_id"]
+    if "predicted_anomaly" not in df.columns and "fused_any_flag" not in df.columns:
+        raise ValueError(
+            "Neither 'predicted_anomaly' nor 'fused_any_flag' found in predictions file."
+        )
     missing = [c for c in required_min if c not in df.columns]
     if missing:
         raise ValueError(
