@@ -421,6 +421,101 @@ def _compute_event_class(row) -> str:
     if bool(int(row.get("spatial_common_event_flag", 0) or 0)):
         return "weather"
     return "sensor_fault"
+
+def _compute_physical_reasoning(row) -> str:
+    """
+    Produce a physics-based sentence describing why this specific
+    anomaly type is anomalous — not a generic label.
+
+    Each anomaly type has a different physical signature. This function
+    produces type-specific reasoning so the alert does not look the same
+    for a frozen sensor and a temperature spike.
+    """
+    anomaly_class = str(row.get("anomaly_class", "")).strip()
+
+    # Extract useful values for richer sentences.
+    def _safe(val, default=None):
+        try:
+            if val is None:
+                return default
+            return float(val)
+        except (TypeError, ValueError):
+            return default
+
+    temp = _safe(row.get("temperature"))
+    press = _safe(row.get("pressure"))
+    humid = _safe(row.get("humidity"))
+    d_temp = _safe(row.get("d_temperature"))
+    z4 = _safe(row.get("temporal_z_4"))
+    qc_count = _safe(row.get("qc_flag_count"), 0)
+
+    # --- Anomaly-specific reasoning ---
+
+    if anomaly_class == "Frozen Sensor":
+        return (
+            "Reading has remained constant across many consecutive samples. "
+            "Natural atmospheric parameters cannot stay perfectly constant "
+            "over time — this is consistent with a stuck or frozen sensor."
+        )
+
+    if anomaly_class == "Temperature Spike":
+        if d_temp is not None and abs(d_temp) > 0.01:
+            dt_str = f"{abs(d_temp):.1f}°C"
+        else:
+            dt_str = "a large amount"
+        return (
+            f"Temperature changed by {dt_str} within one reading interval. "
+            "Natural atmospheric temperature cannot change that fast — "
+            "sensor spike signature."
+        )
+
+    if anomaly_class == "Temperature Drop":
+        if d_temp is not None and abs(d_temp) > 0.01:
+            dt_str = f"{abs(d_temp):.1f}°C"
+        else:
+            dt_str = "a large amount"
+        return (
+            f"Temperature dropped by {dt_str} within one interval while "
+            "pressure and humidity did not show a corresponding change — "
+            "inconsistent with a physical weather transition."
+        )
+
+    if anomaly_class == "Multivariate Inconsistency":
+        return (
+            "Temperature changed but humidity and pressure did not respond. "
+            "In real atmospheric transitions, temperature, pressure and "
+            "humidity change together — this violates physical coupling."
+        )
+
+    if anomaly_class == "Power Failure":
+        return (
+            "All three parameters (temperature, pressure, humidity) "
+            "collapsed to zero simultaneously. No atmospheric state "
+            "produces this combination — sensor or power failure."
+        )
+
+    if anomaly_class == "Calibration Drift":
+        return (
+            "Gradual sustained shift observed over many samples. "
+            "Neither sudden (spike) nor isolated (spatial) — consistent "
+            "with slow sensor calibration drift."
+        )
+
+    if anomaly_class == "Communication Failure":
+        return (
+            "Timestamp gap detected in the data stream. No observations "
+            "were recorded during this interval — communication or power "
+            "loss signature."
+        )
+
+    # Fallback: generic
+    parts = []
+    if z4 is not None and abs(z4) > 2:
+        parts.append(f"temporal z-score {z4:+.1f}")
+    if qc_count:
+        parts.append(f"{int(qc_count)} QC rule(s) fired")
+    detail = ", ".join(parts) if parts else "multi-source evidence"
+    return f"Anomaly detected by {detail}."
 # ----------------------------------------------------------------------
 # Public API
 # ----------------------------------------------------------------------
@@ -510,6 +605,7 @@ def build_backend_output(
         counter_reasoning = _compute_counter_reasoning(row)
         trust_score = _compute_trust_score(row, evidence["evidence_breakdown"])
         event_class = _compute_event_class(row)
+        physical_reasoning = _compute_physical_reasoning(row)
         alert = {
             "station_id": sid,
             "timestamp": str(row["timestamp"]),
@@ -530,6 +626,7 @@ def build_backend_output(
             "counter_reasoning": counter_reasoning,
             "trust_score": trust_score,
             "event_class": event_class,
+            "physical_reasoning": physical_reasoning,
             "corrected_temperature": corrected["corrected_temperature"],
             "corrected_pressure": corrected["corrected_pressure"],
             "corrected_humidity": corrected["corrected_humidity"],
@@ -583,6 +680,7 @@ if __name__ == "__main__":
         c for c in qc.columns if c.startswith("qc_")
     ]
     qc = qc[qc_cols].copy()
+    
 
     # 3. Spatial.
     metadata = pd.read_csv("data/station_metadata.csv")
@@ -608,18 +706,25 @@ if __name__ == "__main__":
     if_df = if_df[[c for c in if_keep if c in if_df.columns]].copy()
 
     # 6. Merge all evidence (drop duplicate ground-truth cols from IF file).
+    # 6. Merge all evidence (drop duplicate ground-truth cols from IF file).
     joined = obs.merge(if_df, on=["station_id", "timestamp"], how="left")
     joined = joined.merge(qc, on=["station_id", "timestamp"], how="left")
     joined = joined.merge(spatial, on=["station_id", "timestamp"], how="left")
     joined = joined.merge(temporal, on=["station_id", "timestamp"], how="left")
 
+    # Merge delta columns for physical reasoning.
+    delta_cols = ["station_id", "timestamp", "d_temperature", "d_pressure", "d_humidity"]
+    delta_cols = [c for c in delta_cols if c in feats.columns]
+    joined = joined.merge(feats[delta_cols], on=["station_id", "timestamp"], how="left")
+
+    # 7. Classify + score.
     classified = classify_anomalies(joined)
     scored = score_anomalies(classified)
 
     # Run the fusion layer to get fused_any_flag.
     from evidence_fusion import fuse_evidence
     fused = fuse_evidence(scored)
-        # Save the fused predictions to a CSV so the evaluator can read them.
+    # Save the fused predictions to a CSV so the evaluator can read them.
     import os
     os.makedirs("data", exist_ok=True)
     fused_out_cols = [
@@ -645,6 +750,17 @@ if __name__ == "__main__":
     print(f"\nTotal anomalies: {len(alerts)}")
     print(f"Saved to: {path}\n")
     print("First 5 alerts (pretty-printed):\n")
-    for a in alerts[:5]:
-        print(json.dumps(a, indent=2, default=str))
-        print("-" * 60)
+    for a in alerts[:5]:    joined = obs.merge(if_df, on=["station_id", "timestamp"], how="left")
+    joined = joined.merge(qc, on=["station_id", "timestamp"], how="left")
+    joined = joined.merge(spatial, on=["station_id", "timestamp"], how="left")
+    joined = joined.merge(temporal, on=["station_id", "timestamp"], how="left")
+
+    # Merge delta columns for physical reasoning.
+    delta_cols = ["station_id", "timestamp", "d_temperature", "d_pressure", "d_humidity"]
+    delta_cols = [c for c in delta_cols if c in feats.columns]
+    joined = joined.merge(feats[delta_cols], on=["station_id", "timestamp"], how="left")
+
+    classified = classify_anomalies(joined)
+    scored = score_anomalies(classified)
+    print(json.dumps(a, indent=2, default=str))
+    print("-" * 60)
