@@ -361,6 +361,25 @@ def _compute_counter_reasoning(row) -> dict:
     spatial_common = bool(int(row.get("spatial_common_event_flag", 0) or 0))
     spatial_isolated = bool(int(row.get("spatial_isolated_flag", 0) or 0))
 
+    spatial_common = bool(int(row.get("spatial_common_event_flag", 0) or 0))
+    spatial_isolated = bool(int(row.get("spatial_isolated_flag", 0) or 0))
+
+    # Reliability of the spatial evidence.
+    try:
+        n_neigh = int(row.get("spatial_neighbours_n", 0) or 0)
+    except (TypeError, ValueError):
+        n_neigh = 0
+
+    if n_neigh >= 2:
+        reliability = "high"
+        reliability_note = f"{n_neigh} nearby stations used for spatial comparison."
+    elif n_neigh == 1:
+        reliability = "medium"
+        reliability_note = "Only 1 neighbor available — spatial evidence weaker."
+    else:
+        reliability = "low"
+        reliability_note = "No neighbors available — spatial evidence not usable."
+
     if spatial_common:
         return {
             "verdict": "possible_weather_event",
@@ -368,6 +387,8 @@ def _compute_counter_reasoning(row) -> dict:
                 "Neighboring stations showed a common change — "
                 "consistent with a regional weather event."
             ),
+            "reliability": reliability,
+            "reliability_note": reliability_note,
         }
 
     if spatial_isolated:
@@ -378,6 +399,8 @@ def _compute_counter_reasoning(row) -> dict:
                 "neighbors remained consistent — isolated sensor "
                 "signature, not regional weather."
             ),
+            "reliability": reliability,
+            "reliability_note": reliability_note,
         }
 
     return {
@@ -386,6 +409,8 @@ def _compute_counter_reasoning(row) -> dict:
             "No spatial counter-evidence available (neighbors "
             "insufficient or timestamp mismatch)."
         ),
+        "reliability": reliability,
+        "reliability_note": reliability_note,
     }
 def _compute_trust_score(row, evidence_breakdown: dict) -> int:
     """
@@ -516,6 +541,279 @@ def _compute_physical_reasoning(row) -> str:
         parts.append(f"{int(qc_count)} QC rule(s) fired")
     detail = ", ".join(parts) if parts else "multi-source evidence"
     return f"Anomaly detected by {detail}."
+def _compute_multivariate_analysis(row) -> dict:
+    """
+    Check whether the direction and magnitude of T / P / RH changes
+    are physically coupled (as expected in real weather) or decoupled
+    (which suggests a sensor fault).
+
+    Returns:
+        verdict: "physically_plausible" | "physically_implausible" | "insufficient_data"
+        reason:  human-readable sentence
+        details: numeric summary of changes
+    """
+    def _safe(val, default=None):
+        try:
+            if val is None:
+                return default
+            v = float(val)
+            if v != v:  # NaN check
+                return default
+            return v
+        except (TypeError, ValueError):
+            return default
+
+    d_t = _safe(row.get("d_temperature"))
+    d_p = _safe(row.get("d_pressure"))
+    d_h = _safe(row.get("d_humidity"))
+
+    details = {
+        "temperature_change": d_t,
+        "pressure_change": d_p,
+        "humidity_change": d_h,
+    }
+
+    if d_t is None or d_h is None:
+        return {
+            "verdict": "insufficient_data",
+            "reason": "Multi-variable deltas not available for this reading.",
+            "details": details,
+        }
+
+    # If the raw reading is all zeros, this is a total collapse.
+    raw_t = _safe(row.get("temperature"))
+    raw_p = _safe(row.get("pressure"))
+    raw_h = _safe(row.get("humidity"))
+    if raw_t == 0 and raw_p == 0 and raw_h == 0:
+        return {
+            "verdict": "total_collapse",
+            "reason": (
+                "All three parameters are exactly zero. "
+                "No atmospheric state produces this - power or sensor failure."
+            ),
+            "details": details,
+        }
+
+        
+    # Detect total sensor/power collapse (all parameters crashed together).
+    # A collapse is NOT a coupling violation — it's a system failure.
+    extreme_threshold = 20.0
+    all_extreme = (
+        d_t is not None and abs(d_t) >= extreme_threshold and
+        d_h is not None and abs(d_h) >= extreme_threshold
+    )
+    if all_extreme:
+        return {
+            "verdict": "total_collapse",
+            "reason": (
+                f"All parameters collapsed simultaneously "
+                f"(T change {d_t:+.1f}, humidity change {d_h:+.1f}). "
+                "No atmospheric process produces this combination — "
+                "sensor or power failure signature."
+            ),
+            "details": details,
+        }
+    # Physical expectation: T and RH move in opposite directions.
+    # T up -> RH down (heating dries air).
+    # T down -> RH up (cooling moistens air).
+    if abs(d_t) < 0.5:
+        return {
+            "verdict": "physically_plausible",
+            "reason": (
+                f"Temperature change ({d_t:+.2f} C) is within normal fluctuation. "
+                "No coupling violation detected."
+            ),
+            "details": details,
+        }
+
+    expected_rh_direction = "up" if d_t < 0 else "down"
+
+    coupling_ok = (
+        (expected_rh_direction == "up" and d_h > 0.5) or
+        (expected_rh_direction == "down" and d_h < -0.5)
+    )
+
+    if coupling_ok:
+        return {
+            "verdict": "physically_plausible",
+            "reason": (
+                f"Temperature moved {d_t:+.1f} C with humidity {d_h:+.1f}% "
+                f"(expected {expected_rh_direction}). Coupling consistent with "
+                "physical atmospheric behavior."
+            ),
+            "details": details,
+        }
+
+    return {
+        "verdict": "physically_implausible",
+        "reason": (
+            f"Temperature moved {d_t:+.1f} C while humidity changed only "
+            f"{d_h:+.1f}% (expected {expected_rh_direction}). "
+            "This violates physical coupling - stronger evidence of sensor fault."
+        ),
+        "details": details,
+    }
+
+
+def _compute_genuine_weather_verdict(row, multivariate: dict) -> dict:
+    """
+    Produce a final verdict: is this a genuine weather event or a sensor fault?
+
+    Combines three signals:
+      1. Spatial common event (neighbors also changed)
+      2. Multivariate coupling (physics check)
+      3. Anomaly type classification
+
+    Returns:
+        genuine_weather_event: bool
+        weather_verdict_reason: str
+    """
+    spatial_common = bool(int(row.get("spatial_common_event_flag", 0) or 0))
+    anomaly_class = str(row.get("anomaly_class", "")).strip()
+    mv_verdict = multivariate.get("verdict", "insufficient_data")
+
+    # Rule 1: If neighbors changed together -> regional event
+    if spatial_common:
+        return {
+            "genuine_weather_event": True,
+            "weather_verdict_reason": (
+                "Neighboring stations showed a common change - "
+                "this is a regional weather pattern, not an isolated sensor fault."
+            ),
+        }
+
+    # Rule 2: If the anomaly is multivariate-inconsistent -> definitely fault
+    if anomaly_class == "Multivariate Inconsistency":
+        return {
+            "genuine_weather_event": False,
+            "weather_verdict_reason": (
+                "Temperature, pressure, and humidity changed in a way that "
+                "violates physical coupling - cannot be a real atmospheric event."
+            ),
+        }
+
+    # Rule 3: If the anomaly is a power failure -> definitely fault
+    if anomaly_class == "Power Failure":
+        return {
+            "genuine_weather_event": False,
+            "weather_verdict_reason": (
+                "All parameters collapsed to zero simultaneously. "
+                "No atmospheric state produces this - sensor/power failure."
+            ),
+        }
+        # Rule 3.5: Total collapse -> definitely fault
+    if mv_verdict == "total_collapse":
+        return {
+            "genuine_weather_event": False,
+            "weather_verdict_reason": (
+                "All parameters collapsed to zero simultaneously. "
+                "This is a total sensor/power failure, not a weather event."
+            ),
+        }
+
+
+    # Rule 4: If physics coupling is implausible -> likely fault
+    if mv_verdict == "physically_implausible":
+        return {
+            "genuine_weather_event": False,
+            "weather_verdict_reason": (
+                "Temperature change is not coupled with humidity change - "
+                "inconsistent with a physical weather event."
+            ),
+        }
+
+    # Rule 5: If anomaly type is a spike or drop with no spatial support -> fault
+    if anomaly_class in ("Temperature Spike", "Temperature Drop", "Frozen Sensor"):
+        return {
+            "genuine_weather_event": False,
+            "weather_verdict_reason": (
+                f"{anomaly_class} signature with no regional corroboration - "
+                "consistent with sensor fault."
+            ),
+        }
+
+    # Default: cannot determine
+    return {
+        "genuine_weather_event": False,
+        "weather_verdict_reason": (
+            "Anomaly detected without positive weather-event signature. "
+            "Flagged as likely sensor fault."
+        ),
+    }
+
+
+def _compute_defensibility(row, evidence: dict, multivariate: dict, weather_verdict: dict) -> dict:
+    """
+    A defensibility block that explicitly states:
+      - What evidence supports the conclusion
+      - What evidence is missing or weak
+      - Known limitations
+      - Recommended operator action
+      - Meaning of the confidence score
+
+    This block answers the "what if ground conditions differ?" question
+    before it is asked.
+    """
+    # Evidence for the fault hypothesis
+    evidence_for = []
+    breakdown = evidence.get("evidence_breakdown", {})
+    for source, d in breakdown.items():
+        if d.get("fired"):
+            evidence_for.append(source)
+
+    # Evidence against (counter-evidence)
+    evidence_against = []
+    if bool(int(row.get("spatial_common_event_flag", 0) or 0)):
+        evidence_against.append("regional_change_detected")
+
+    # Known limitations
+    limitations = [
+        "Assumes physical coupling rules apply - extreme localized events "
+        "could produce similar signatures."
+    ]
+    if multivariate.get("verdict") == "insufficient_data":
+        limitations.append("Multivariate deltas unavailable for this reading.")
+    if weather_verdict.get("genuine_weather_event"):
+        limitations.append("Classified as possible regional weather event.")
+
+    return {
+        "evidence_for_fault": evidence_for,
+        "evidence_against_fault": evidence_against,
+        "known_limitations": limitations,
+        "operator_action": "Review recommended. Original reading preserved.",
+        "confidence_meaning": "Evidence strength, not probability of failure.",
+    }
+    # Determine expected direction of humidity change
+    expected_rh_direction = "up" if d_t < 0 else "down"
+    observed_rh_direction = "up" if d_h > 0 else ("down" if d_h < 0 else "flat")
+
+    # Tolerance: if humidity moves less than ~20% of what's expected,
+    # the coupling is considered weak.
+    coupling_ok = (
+        (expected_rh_direction == "up" and d_h > 0.5) or
+        (expected_rh_direction == "down" and d_h < -0.5)
+    )
+
+    if coupling_ok:
+        return {
+            "verdict": "physically_plausible",
+            "reason": (
+                f"Temperature moved {d_t:+.1f}°C with humidity {d_h:+.1f}% "
+                f"(expected {expected_rh_direction}). Coupling consistent with "
+                "physical atmospheric behavior."
+            ),
+            "details": details,
+        }
+
+    return {
+        "verdict": "physically_implausible",
+        "reason": (
+            f"Temperature moved {d_t:+.1f}°C while humidity changed only "
+            f"{d_h:+.1f}% (expected {expected_rh_direction}). "
+            "This violates physical coupling — stronger evidence of sensor fault."
+        ),
+        "details": details,
+    }
 # ----------------------------------------------------------------------
 # Public API
 # ----------------------------------------------------------------------
@@ -601,11 +899,14 @@ def build_backend_output(
         )
 
         evidence = _compute_evidence_breakdown(row)
-
         counter_reasoning = _compute_counter_reasoning(row)
         trust_score = _compute_trust_score(row, evidence["evidence_breakdown"])
         event_class = _compute_event_class(row)
         physical_reasoning = _compute_physical_reasoning(row)
+        multivariate = _compute_multivariate_analysis(row)
+        weather_verdict = _compute_genuine_weather_verdict(row, multivariate)
+        defensibility = _compute_defensibility(row, evidence, multivariate, weather_verdict)
+
         alert = {
             "station_id": sid,
             "timestamp": str(row["timestamp"]),
@@ -627,6 +928,10 @@ def build_backend_output(
             "trust_score": trust_score,
             "event_class": event_class,
             "physical_reasoning": physical_reasoning,
+            "multivariate_analysis": multivariate,
+            "genuine_weather_event": weather_verdict["genuine_weather_event"],
+            "weather_verdict_reason": weather_verdict["weather_verdict_reason"],
+            "defensibility": defensibility,
             "corrected_temperature": corrected["corrected_temperature"],
             "corrected_pressure": corrected["corrected_pressure"],
             "corrected_humidity": corrected["corrected_humidity"],
@@ -750,17 +1055,6 @@ if __name__ == "__main__":
     print(f"\nTotal anomalies: {len(alerts)}")
     print(f"Saved to: {path}\n")
     print("First 5 alerts (pretty-printed):\n")
-    for a in alerts[:5]:    joined = obs.merge(if_df, on=["station_id", "timestamp"], how="left")
-    joined = joined.merge(qc, on=["station_id", "timestamp"], how="left")
-    joined = joined.merge(spatial, on=["station_id", "timestamp"], how="left")
-    joined = joined.merge(temporal, on=["station_id", "timestamp"], how="left")
-
-    # Merge delta columns for physical reasoning.
-    delta_cols = ["station_id", "timestamp", "d_temperature", "d_pressure", "d_humidity"]
-    delta_cols = [c for c in delta_cols if c in feats.columns]
-    joined = joined.merge(feats[delta_cols], on=["station_id", "timestamp"], how="left")
-
-    classified = classify_anomalies(joined)
-    scored = score_anomalies(classified)
-    print(json.dumps(a, indent=2, default=str))
-    print("-" * 60)
+    for a in alerts[:5]:
+        print(json.dumps(a, indent=2, default=str))
+        print("-" * 60)
