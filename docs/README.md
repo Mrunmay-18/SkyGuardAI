@@ -243,6 +243,39 @@ No SHAP/LIME — rule-based reasons used instead. SHAP planned.
 
 Sensor health shows "healthy" for single alerts — because health is a 24-hour per-station status, not per-alert.
 
+---
+
+## Calibration Drift — Investigation & Findings
+
+A dedicated gradual-drift detector was implemented as a sixth evidence source
+in the SkyGuard architecture (available on the `drift-experiment` branch,
+`src/drift_detector.py`), using:
+- Rolling 7-day baseline comparison
+- Linear regression slope test on the recent window
+- Persistence requirement (12 consecutive readings)
+- Parameter-specific physical validity checks
+
+**Validation finding:**
+The synthetic benchmark injects calibration drift as a 24-hour linear ramp
+(+4.0°C over 96 observations, ~0.04°C per reading). This rate is 5–10x smaller
+than natural 15-minute temperature variation (~0.2–0.5°C per reading) on the
+same dataset. No window configuration detected the injected drift without also
+flagging normal diurnal temperature cycles.
+
+**Outcome:**
+The drift detector is retained as an independent evidence source in the
+architecture but is NOT integrated into the live fusion pipeline on this
+benchmark, because it produces false positives on natural temperature variation
+without reliably detecting the injected drift.
+
+**Future work:**
+Reliable calibration-drift validation requires multi-week historical data or
+synthetic drift scenarios extending over 7–14 days. Real-world calibration
+drift occurs over weeks to months — the current 24-hour injection timescale
+is too short to distinguish from natural diurnal variation.
+
+---
+
 Future Work
 Calibration drift detector — rolling-baseline comparison per station
 
@@ -315,4 +348,3 @@ Config-driven thresholds — no magic numbers; all in dataclasses.
 
 Honest disclaimers — prototype heuristics, not WMO standards.
 SkyGuard AI is a prototype. Thresholds are operational heuristics. Do not use for operational decisions without domain calibration.
-
