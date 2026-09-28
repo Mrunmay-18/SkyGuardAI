@@ -51,16 +51,27 @@ export default function StationMap() {
   const lonMin = Math.min(...lons);
   const lonMax = Math.max(...lons);
 
+  // Padding: markers stay within this range to avoid edge collisions.
+  // Bigger padding = more space for labels.
+  const PAD_X = 18;   // % padding left/right
+  const PAD_Y = 22;   // % padding top/bottom
+
+  // Aspect-ratio aware projection: preserves relative distances while
+  // fitting within the padded area.
+  const lonSpan = lonMax - lonMin || 1;
+  const latSpan = latMax - latMin || 1;
+
+  // Compute aspect ratio (real distance in degrees; roughly 1° lon ≈ 1° lat at low latitudes)
+  const aspect = lonSpan / latSpan;
+
   function projectX(lon: number) {
-    if (lonMax === lonMin) return 50;
-    // Pad so markers don't stick to edges
-    return 12 + ((lon - lonMin) / (lonMax - lonMin)) * 76;
+    const t = (lon - lonMin) / lonSpan;
+    return PAD_X + t * (100 - 2 * PAD_X);
   }
 
   function projectY(lat: number) {
-    if (latMax === latMin) return 50;
-    // Invert Y (latitude increases upward)
-    return 88 - ((lat - latMin) / (latMax - latMin)) * 76;
+    const t = (lat - latMin) / latSpan;
+    return (100 - PAD_Y) - t * (100 - 2 * PAD_Y);
   }
 
   return (
@@ -160,12 +171,15 @@ export default function StationMap() {
 
               {/* Label */}
               <div
-                className="absolute whitespace-nowrap text-xs font-medium"
+                className="absolute whitespace-nowrap text-[11px] font-semibold px-1.5 py-0.5 rounded bg-white/85 backdrop-blur-sm"
                 style={{
                   left: "50%",
-                  top: "calc(100% + 6px)",
+                  top: s.latitude > (latMin + latMax) / 2
+                    ? "calc(100% + 4px)"      // marker on top half → label below
+                    : "calc(-100% - 8px)",    // marker on bottom half → label above
                   transform: "translateX(-50%)",
                   color: "#17201E",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
                 }}
               >
                 {s.station_name}
@@ -210,7 +224,7 @@ export default function StationMap() {
         })}
 
         {/* Legend overlay */}
-        <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur rounded-md shadow-md p-3 text-xs border border-gray-200">
+        <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur rounded-md shadow-md p-3 text-xs border border-gray-200">
           <p className="font-semibold mb-2 text-gray-800">Status</p>
           <div className="flex items-center gap-2 mb-1">
             <span
