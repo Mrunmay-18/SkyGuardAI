@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F7F8F6;
+  --foreground: #17201E;
+  --accent: #0F766E;
+  --muted: #6B7280;
+  --border: #E5E7EB;
+  --card-bg: #FFFFFF;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --success: #10B981;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes radar-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.pulse-marker {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.radar-sweep {
+  animation: radar-sweep 3s linear infinite;
+}

@@ -277,7 +277,7 @@ is too short to distinguish from natural diurnal variation.
 ---
 
 Future Work
-Calibration drift detector — rolling-baseline comparison per station
+- **Calibration drift detector** — implemented (`drift-experiment` branch); needs multi-week validation data
 
 Edge AI on ESP32 — quantized model, low-power inference
 

@@ -18,3 +18,4 @@ results/
 .DS_Store
 Thumbs.db
 .streamlit/
+_backup_phase1/
