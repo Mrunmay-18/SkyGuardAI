@@ -82,7 +82,7 @@ export default function RiskLevelChart() {
   data.sort((a, b) => b.risk - a.risk);
 
   return (
-    <Card className="p-5">
+    <Card className="p-5 card-soft">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-gray-800">
           Station Risk Level
