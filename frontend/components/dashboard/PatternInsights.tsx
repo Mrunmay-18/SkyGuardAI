@@ -154,7 +154,7 @@ export default function PatternInsights() {
         {insights.slice(0, 6).map((ins, i) => (
           <div
             key={i}
-            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 fade-in"
             style={{ borderLeft: `4px solid ${ins.color}` }}
           >
             <div className="flex items-start gap-3">
