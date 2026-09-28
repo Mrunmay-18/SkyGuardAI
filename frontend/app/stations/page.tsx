@@ -128,10 +128,10 @@ export default function StationsPage() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${
+                className={`px-3.5 py-1.5 text-xs rounded-full border transition-all duration-150 font-medium ${
                   filter === f
-                    ? "bg-teal-600 text-white border-teal-600"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-teal-400"
+                    ? "bg-teal-600 text-white border-teal-600 shadow-sm"
+                    : "bg-white text-gray-700 border-gray-200 hover:border-teal-400 hover:text-teal-700"
                 }`}
               >
                 {f} ({counts[f]})
