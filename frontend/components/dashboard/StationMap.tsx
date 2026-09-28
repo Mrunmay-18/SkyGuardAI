@@ -64,9 +64,9 @@ export default function StationMap() {
   }
 
   return (
-    <Card className="overflow-hidden">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-800">
+    <Card className="overflow-hidden card-soft">
+      <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-teal-50/50 to-transparent">
+        <h3 className="text-sm font-bold text-gray-900 tracking-tight">
           AWS Network Topology — Pune Region
         </h3>
         <p className="text-xs text-gray-500 mt-0.5">
