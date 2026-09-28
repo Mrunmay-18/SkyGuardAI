@@ -93,7 +93,7 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
         const cfg = PRIORITY_CONFIG[tier];
         return (
           <div key={tier}>
-            <h3 className={`text-sm font-semibold mb-3 ${cfg.color}`}>
+                        <h3 className={`text-xs font-bold mb-3 tracking-wider uppercase ${cfg.color}`}>
               {cfg.label} ({tier}) — {items.length} alert
               {items.length !== 1 ? "s" : ""}
             </h3>
@@ -102,9 +102,9 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
                 const key = `${alert.station_id}-${alert.timestamp}`;
                 const isAck = acknowledged.has(key);
                 return (
-                  <Card
+                  <Card 
                     key={i}
-                    className={`p-4 ${cfg.border} ${cfg.bg} ${
+                    className={`p-4 ${cfg.border} ${cfg.bg} card-soft fade-in ${
                       isAck ? "opacity-60" : ""
                     }`}
                   >
