@@ -77,7 +77,7 @@ export default function ParameterCharts() {
     color: string
   ) {
     return (
-      <Card className="p-4">
+        <Card className="p-5 card-soft">
         <div className="flex items-center gap-2 mb-3">
           <Icon size={18} style={{ color }} />
           <h3 className="text-sm font-semibold text-gray-800">
