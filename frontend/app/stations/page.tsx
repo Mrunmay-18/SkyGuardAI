@@ -153,10 +153,10 @@ export default function StationsPage() {
       </Card>
 
       {/* Station table */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden card-soft">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
               <tr className="text-left text-xs font-semibold text-gray-600 uppercase">
                 <th className="px-4 py-3">Station</th>
                 <th className="px-4 py-3">Coordinates</th>
@@ -174,7 +174,7 @@ export default function StationsPage() {
                 return (
                   <tr
                     key={r.station_id}
-                    className="hover:bg-gray-50 cursor-pointer"
+                    className="hover:bg-teal-50/40 cursor-pointer transition-colors"
                     onClick={() => setSelected(r)}
                   >
                     <td className="px-4 py-3">
