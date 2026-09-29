@@ -6,6 +6,8 @@ import WarningCards from "@/components/dashboard/WarningCards";
 import RiskLevelChart from "@/components/dashboard/RiskLevelChart";
 import AlertDetailModal from "@/components/dashboard/AlertDetailModal";
 import type { Alert } from "@/lib/api";
+import MetricsCard from "@/components/dashboard/MetricsCard";
+import FaultVsWeatherSummary from "@/components/dashboard/FaultVsWeatherSummary";
 
 export default function DashboardPage() {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -20,7 +22,13 @@ export default function DashboardPage() {
           Real-time AWS anomaly detection and monitoring
         </p>
       </div>
-
+            {/* Performance metrics */}
+      <section>
+        <MetricsCard />
+      </section>
+            <section>
+        <FaultVsWeatherSummary />
+      </section>
       <section>
         <h2 className="section-title mb-5">Active Alerts</h2>
         <WarningCards onSelect={setSelectedAlert} />
