@@ -2,7 +2,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, TrendingUp, Activity, CheckCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  TrendingUp,
+  Activity,
+  CheckCircle,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getAlerts, getStations, type Alert, type Station } from "@/lib/api";
 
@@ -30,7 +35,7 @@ export default function PatternInsights() {
 
   if (loading) {
     return (
-      <Card className="p-6 text-center text-sm text-gray-500">
+      <Card className="p-6 text-center text-sm text-gray-500 card-soft">
         Analyzing patterns…
       </Card>
     );
@@ -120,13 +125,14 @@ export default function PatternInsights() {
     insights.push({
       icon: "success",
       title: "Network stable",
-      detail: "No significant patterns detected. All stations within normal ranges.",
+      detail:
+        "No significant patterns detected. All stations within normal ranges.",
       color: "#10B981",
     });
   }
 
   function renderIcon(icon: Insight["icon"], color: string) {
-    const props = { size: 20, style: { color } };
+    const props = { size: 18, style: { color } };
     switch (icon) {
       case "warning":
         return <AlertTriangle {...props} />;
@@ -140,8 +146,8 @@ export default function PatternInsights() {
   }
 
   return (
-    <Card className="p-5">
-      <div className="mb-4">
+    <Card className="p-5 card-soft">
+      <div className="mb-5">
         <h3 className="text-sm font-semibold text-gray-800">
           Pattern Insights
         </h3>
@@ -158,9 +164,14 @@ export default function PatternInsights() {
             style={{ borderLeft: `4px solid ${ins.color}` }}
           >
             <div className="flex items-start gap-3">
-              {renderIcon(ins.icon, ins.color)}
+              <div
+                className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${ins.color}15` }}
+              >
+                {renderIcon(ins.icon, ins.color)}
+              </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-gray-900 mb-1">
+                <p className="font-semibold text-sm text-gray-900 mb-1 leading-snug">
                   {ins.title}
                 </p>
                 <p className="text-xs text-gray-600 leading-relaxed">
