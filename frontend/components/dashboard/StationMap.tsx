@@ -94,11 +94,11 @@ export default function StationMap() {
             <Radio size={16} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-stone-900 tracking-tight">
-              AWS Network Topology — Pune Region
+            <h3 className="text-sm font-semibold text-gray-800">
+              Geospatial Radar & Station Status
             </h3>
-            <p className="text-[11px] text-stone-500 font-medium">
-              5 automated stations • Hover a marker to view real-time diagnostics
+            <p className="text-xs text-gray-500 mt-0.5">
+              Pune region • 5 AWS stations • live radar sweep
             </p>
           </div>
         </div>

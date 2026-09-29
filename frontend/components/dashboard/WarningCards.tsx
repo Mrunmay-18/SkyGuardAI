@@ -25,28 +25,36 @@ const PRIORITY_CONFIG: Record<
   string,
   {
     label: string;
-    badgeClass: string;
+    color: string;
+    bg: string;
+    border: string;
+    accent: string;
     headingColor: string;
-    cardAccentBorder: string;
   }
 > = {
   P1: {
     label: "Critical",
-    badgeClass: "text-rose-700 bg-rose-50 border-rose-200/90",
+    color: "text-rose-700",
+    bg: "bg-white",
+    border: "border border-red-100",
+    accent: "#EF4444",
     headingColor: "text-rose-700",
-    cardAccentBorder: "border-l-4 border-l-rose-500",
   },
   P2: {
     label: "High",
-    badgeClass: "text-amber-700 bg-amber-50 border-amber-200/90",
+    color: "text-amber-700",
+    bg: "bg-white",
+    border: "border border-amber-100",
+    accent: "#F59E0B",
     headingColor: "text-amber-700",
-    cardAccentBorder: "border-l-4 border-l-amber-500",
   },
   P3: {
     label: "Routine",
-    badgeClass: "text-sky-700 bg-sky-50 border-sky-200/90",
-    headingColor: "text-sky-700",
-    cardAccentBorder: "border-l-4 border-l-sky-500",
+    color: "text-blue-700",
+    bg: "bg-white",
+    border: "border border-blue-100",
+    accent: "#3B82F6",
+    headingColor: "text-blue-700",
   },
 };
 
@@ -199,10 +207,16 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
                 return (
                   <Card
                     key={i}
-                    className={`rounded-2xl p-5 bg-white border border-stone-200/80 shadow-soft shadow-lift transition-all duration-200 flex flex-col justify-between ${
-                      cfg.cardAccentBorder
-                    } ${isAck ? "opacity-60 bg-stone-50/50" : ""}`}
+                    className={`relative overflow-hidden rounded-2xl p-5 ${cfg.bg} ${cfg.border} shadow-soft shadow-lift transition-all duration-200 flex flex-col justify-between ${
+                      isAck ? "opacity-60 bg-stone-50/50" : ""
+                    }`}
                   >
+                    {/* Top colored accent bar */}
+                    <div
+                      className="absolute top-0 left-0 right-0 h-1"
+                      style={{ backgroundColor: cfg.accent }}
+                    />
+
                     <div>
                       {/* Top bar: station info + top-right priority badge */}
                       <div className="flex items-start justify-between gap-3 mb-3">
@@ -225,8 +239,16 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
 
                         {/* Priority badge in top-right corner */}
                         <span
-                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border shadow-2xs shrink-0 ${cfg.badgeClass}`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase shrink-0"
+                          style={{
+                            backgroundColor: `${cfg.accent}15`,
+                            color: cfg.accent,
+                          }}
                         >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: cfg.accent }}
+                          />
                           {tier} • {cfg.label}
                         </span>
                       </div>

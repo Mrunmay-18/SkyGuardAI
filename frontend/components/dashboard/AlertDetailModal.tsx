@@ -81,11 +81,11 @@ export default function AlertDetailModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+        className="bg-white rounded-lg max-w-3xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-start justify-between z-10">
+        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-start justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-lg font-bold text-gray-900">
@@ -104,13 +104,14 @@ export default function AlertDetailModal({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 transition-colors"
+            aria-label="Close"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all shrink-0 ml-3"
           >
-            <X size={22} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-6">
+        <div className="px-6 py-5 space-y-6 overflow-y-auto flex-1">
           {/* Observed vs Corrected */}
           <div>
             <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
