@@ -64,6 +64,11 @@ export default function StationMap() {
   // Compute aspect ratio (real distance in degrees; roughly 1° lon ≈ 1° lat at low latitudes)
   const aspect = lonSpan / latSpan;
 
+  const PAD_X = 18;
+  const PAD_Y = 22;
+  const lonSpan = lonMax - lonMin || 1;
+  const latSpan = latMax - latMin || 1;
+
   function projectX(lon: number) {
     const t = (lon - lonMin) / lonSpan;
     return PAD_X + t * (100 - 2 * PAD_X);
