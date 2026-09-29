@@ -146,6 +146,18 @@ def inject_fault(req: InjectionRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+@app.get("/api/reality-check")
+def reality_check():
+    """
+    Run two contrasting scenarios:
+    A) Isolated sensor fault — one station spikes, neighbors normal
+    B) Regional weather event — all stations rise together
+    """
+    try:
+        from inject_demo import build_comparison_scenarios
+        return build_comparison_scenarios()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
