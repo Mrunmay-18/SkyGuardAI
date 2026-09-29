@@ -69,7 +69,7 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
 
   if (alerts.length === 0) {
     return (
-      <Card className="p-6 text-center">
+      <Card className="p-6 text-center card-soft">
         <CheckCircle className="mx-auto text-green-500 mb-2" size={32} />
         <p className="text-gray-700 font-medium">No active alerts</p>
         <p className="text-sm text-gray-500 mt-1">
@@ -93,7 +93,9 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
         const cfg = PRIORITY_CONFIG[tier];
         return (
           <div key={tier}>
-                        <h3 className={`text-xs font-bold mb-3 tracking-wider uppercase ${cfg.color}`}>
+            <h3
+              className={`text-xs font-bold mb-3 tracking-wider uppercase ${cfg.color}`}
+            >
               {cfg.label} ({tier}) — {items.length} alert
               {items.length !== 1 ? "s" : ""}
             </h3>
@@ -102,7 +104,7 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
                 const key = `${alert.station_id}-${alert.timestamp}`;
                 const isAck = acknowledged.has(key);
                 return (
-                  <Card 
+                  <Card
                     key={i}
                     className={`p-4 ${cfg.border} ${cfg.bg} card-soft fade-in ${
                       isAck ? "opacity-60" : ""

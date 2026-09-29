@@ -32,7 +32,7 @@ export default function RiskLevelChart() {
 
   if (loading) {
     return (
-      <Card className="p-8 text-center text-sm text-gray-500">
+      <Card className="p-8 text-center text-sm text-gray-500 card-soft">
         Loading risk levels…
       </Card>
     );
@@ -40,19 +40,16 @@ export default function RiskLevelChart() {
 
   // Build per-station counts
   const data = stations.map((s) => {
-    const count = alerts.filter((a) => a.station_id === s.station_id).length;
     const stationAlerts = alerts.filter((a) => a.station_id === s.station_id);
+    const count = stationAlerts.length;
     const avgTrust =
-      stationAlerts.length > 0
+      count > 0
         ? Math.round(
-            stationAlerts.reduce((sum, a) => sum + a.trust_score, 0) /
-              stationAlerts.length
+            stationAlerts.reduce((sum, a) => sum + a.trust_score, 0) / count
           )
         : 0;
 
-    // Risk score: 0-100 (higher = riskier)
-    // 3+ alerts = 100, 2 alerts = 66, 1 alert = 33, 0 alerts = 0
-    // Adjusted by trust (higher trust = higher risk)
+    // Risk score: base from count, adjusted by trust
     const baseRisk = Math.min(100, count * 33);
     const trustFactor = count > 0 ? avgTrust / 100 : 0;
     const risk = Math.round(baseRisk * (0.7 + 0.3 * trustFactor));
@@ -98,22 +95,35 @@ export default function RiskLevelChart() {
           layout="vertical"
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={false} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#F1F5F9"
+            horizontal={false}
+          />
           <XAxis
             type="number"
             domain={[0, 100]}
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: "#94A3B8" }}
             ticks={[0, 25, 50, 75, 100]}
+            axisLine={false}
+            tickLine={false}
           />
           <YAxis
             type="category"
             dataKey="station"
-            tick={{ fontSize: 12 }}
-            width={100}
+            tick={{ fontSize: 12, fill: "#475569" }}
+            width={110}
+            axisLine={false}
+            tickLine={false}
           />
           <Tooltip
-            contentStyle={{ fontSize: 12 }}
-            formatter={((value: any, _name: any, props: any) => {
+            contentStyle={{
+              fontSize: 12,
+              borderRadius: 6,
+              border: "1px solid #E2E8F0",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+            }}
+            formatter={((value: number, _name: string, props: any) => {
               const row = props?.payload;
               if (!row) return [String(value), ""];
               return [`${row.risk} / 100 (${riskLabel(row.risk)})`, "Risk"];
@@ -128,7 +138,7 @@ export default function RiskLevelChart() {
       </ResponsiveContainer>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-4 text-xs text-gray-600">
+      <div className="flex items-center justify-center gap-6 mt-5 pt-4 border-t border-gray-100 text-xs text-gray-600">
         <div className="flex items-center gap-2">
           <span
             className="inline-block w-3 h-3 rounded"
