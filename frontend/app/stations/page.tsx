@@ -44,10 +44,13 @@ export default function StationsPage() {
   }, []);
 
   if (loading) {
-    return <div className="text-sm text-gray-500 py-8 text-center">Loading stations…</div>;
+    return (
+      <div className="text-sm text-gray-500 py-8 text-center">
+        Loading stations…
+      </div>
+    );
   }
 
-  // Build enriched station rows
   const rows: StationRow[] = stations.map((s) => {
     const stationAlerts = alerts.filter((a) => a.station_id === s.station_id);
     const alertsCount = stationAlerts.length;
@@ -56,7 +59,6 @@ export default function StationsPage() {
     if (alertsCount >= 3) status = "At Risk";
     else if (alertsCount >= 1) status = "Watch";
 
-    // Take the most recent alert's readings
     const latest = stationAlerts.length > 0 ? stationAlerts[0] : null;
 
     return {
@@ -70,7 +72,6 @@ export default function StationsPage() {
     };
   });
 
-  // Apply filter + search
   let filtered = rows;
   if (filter !== "All") {
     filtered = filtered.filter((r) => r.status === filter);
@@ -106,40 +107,42 @@ export default function StationsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 fade-in">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">AWS Network</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          AWS Network
+        </h1>
+        <p className="text-sm text-gray-500 mt-2">
           All {stations.length} Automatic Weather Stations in the Pune region
         </p>
       </div>
 
       {/* Filter + search bar */}
-      <Card className="p-4">
+      <Card className="p-4 card-soft">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Filter size={16} />
             <span className="font-medium">Filter:</span>
           </div>
 
-          {(["All", "Healthy", "Watch", "At Risk", "Offline"] as FilterType[]).map(
-            (f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3.5 py-1.5 text-xs rounded-full border transition-all duration-150 font-medium ${
-                  filter === f
-                    ? "bg-teal-600 text-white border-teal-600 shadow-sm"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-teal-400 hover:text-teal-700"
-                }`}
-              >
-                {f} ({counts[f]})
-              </button>
-            )
-          )}
+          {(
+            ["All", "Healthy", "Watch", "At Risk", "Offline"] as FilterType[]
+          ).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3.5 py-1.5 text-xs rounded-full border transition-all duration-150 font-medium ${
+                filter === f
+                  ? "bg-teal-600 text-white border-teal-600 shadow-sm"
+                  : "bg-white text-gray-700 border-gray-200 hover:border-teal-400 hover:text-teal-700"
+              }`}
+            >
+              {f} ({counts[f]})
+            </button>
+          ))}
 
-          <div className="ml-auto flex items-center gap-2 bg-gray-50 rounded-md px-3 py-1.5">
+          <div className="ml-auto flex items-center gap-2 bg-gray-50 rounded-md px-3 py-1.5 border border-gray-200 focus-within:border-teal-400 transition-colors">
             <Search size={14} className="text-gray-400" />
             <input
               type="text"
@@ -157,7 +160,7 @@ export default function StationsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
-              <tr className="text-left text-xs font-semibold text-gray-600 uppercase">
+              <tr className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 <th className="px-4 py-3">Station</th>
                 <th className="px-4 py-3">Coordinates</th>
                 <th className="px-4 py-3">Status</th>
@@ -184,11 +187,13 @@ export default function StationsPage() {
                           <p className="font-semibold text-gray-900">
                             {r.station_name}
                           </p>
-                          <p className="text-xs text-gray-500">{r.station_id}</p>
+                          <p className="text-xs text-gray-500">
+                            {r.station_id}
+                          </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">
+                    <td className="px-4 py-3 text-xs text-gray-600 font-mono">
                       {r.latitude.toFixed(3)}, {r.longitude.toFixed(3)}
                     </td>
                     <td className="px-4 py-3">
@@ -266,11 +271,11 @@ export default function StationsPage() {
       {/* Station detail modal */}
       {selected && (
         <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 fade-in"
           onClick={() => setSelected(null)}
         >
           <div
-            className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6"
+            className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
@@ -285,24 +290,27 @@ export default function StationsPage() {
               </div>
               <button
                 onClick={() => setSelected(null)}
-                className="text-gray-400 hover:text-gray-700 text-2xl leading-none"
+                className="text-gray-400 hover:text-gray-700 text-2xl leading-none transition-colors"
               >
                 ×
               </button>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <Card className="p-3">
+              <Card className="p-3 card-soft">
                 <p className="text-xs text-gray-500 mb-1">Status</p>
-                <p className="font-semibold" style={{ color: statusColor(selected.status).dot }}>
+                <p
+                  className="font-semibold"
+                  style={{ color: statusColor(selected.status).dot }}
+                >
                   {selected.status}
                 </p>
               </Card>
-              <Card className="p-3">
+              <Card className="p-3 card-soft">
                 <p className="text-xs text-gray-500 mb-1">Alerts</p>
                 <p className="font-semibold text-gray-900">{selected.alerts}</p>
               </Card>
-              <Card className="p-3">
+              <Card className="p-3 card-soft">
                 <p className="text-xs text-gray-500 mb-1">Latest Temp</p>
                 <p className="font-semibold text-gray-900">
                   {selected.latestTemp !== null
@@ -310,7 +318,7 @@ export default function StationsPage() {
                     : "—"}
                 </p>
               </Card>
-              <Card className="p-3">
+              <Card className="p-3 card-soft">
                 <p className="text-xs text-gray-500 mb-1">Latest Humidity</p>
                 <p className="font-semibold text-gray-900">
                   {selected.latestHumidity !== null
@@ -323,8 +331,11 @@ export default function StationsPage() {
             <h4 className="text-sm font-semibold text-gray-800 mb-2">
               Recent Alerts
             </h4>
-            {alerts.filter((a) => a.station_id === selected.station_id).length === 0 ? (
-              <p className="text-sm text-gray-500">No alerts for this station.</p>
+            {alerts.filter((a) => a.station_id === selected.station_id)
+              .length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No alerts for this station.
+              </p>
             ) : (
               <ul className="space-y-2">
                 {alerts
@@ -332,7 +343,7 @@ export default function StationsPage() {
                   .map((a, i) => (
                     <li
                       key={i}
-                      className="border border-gray-200 rounded-md p-3 text-xs"
+                      className="border border-gray-200 rounded-md p-3 text-xs bg-white hover:shadow-sm transition-shadow"
                       style={{
                         borderLeft: `3px solid ${
                           a.priority === "P1"
