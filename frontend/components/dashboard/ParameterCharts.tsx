@@ -11,11 +11,10 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ReferenceDot,
 } from "recharts";
 import { Thermometer, Droplet, Gauge } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { getAlerts, getObservations, type Alert, type Observation } from "@/lib/api";
+import { getObservations, type Observation } from "@/lib/api";
 
 const STATION_COLORS: Record<string, string> = {
   AWS_01: "#EF4444",
@@ -35,36 +34,37 @@ const STATION_NAMES: Record<string, string> = {
 
 export default function ParameterCharts() {
   const [observations, setObservations] = useState<Observation[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const [obs, al] = await Promise.all([getObservations(), getAlerts()]);
-      // Keep last 300 rows for performance
+      const obs = await getObservations();
       setObservations(obs.slice(-300));
-      setAlerts(al);
       setLoading(false);
     }
     load();
   }, []);
 
   if (loading) {
-    return <div className="text-sm text-gray-500 py-8 text-center">Loading charts…</div>;
+    return (
+      <div className="text-sm text-gray-500 py-8 text-center">
+        Loading charts…
+      </div>
+    );
   }
 
   // Group observations by timestamp for multi-line charts
-  const byTime = new Map<string, any>();
+  const byTime = new Map<string, Record<string, unknown>>();
   observations.forEach((o) => {
     const key = o.timestamp;
     if (!byTime.has(key)) byTime.set(key, { timestamp: key });
-    const row = byTime.get(key);
+    const row = byTime.get(key)!;
     row[`${o.station_id}_temperature`] = o.temperature;
     row[`${o.station_id}_humidity`] = o.humidity;
     row[`${o.station_id}_pressure`] = o.pressure;
   });
   const chartData = Array.from(byTime.values()).sort((a, b) =>
-    a.timestamp.localeCompare(b.timestamp)
+    String(a.timestamp).localeCompare(String(b.timestamp))
   );
 
   const stations = Array.from(new Set(observations.map((o) => o.station_id)));
@@ -73,42 +73,68 @@ export default function ParameterCharts() {
     paramKey: "temperature" | "humidity" | "pressure",
     yLabel: string,
     unit: string,
-    Icon: any,
+    Icon: typeof Thermometer,
     color: string
   ) {
     return (
-        <Card className="p-5 card-soft">
-        <div className="flex items-center gap-2 mb-3">
-          <Icon size={18} style={{ color }} />
-          <h3 className="text-sm font-semibold text-gray-800">
-            {yLabel} ({unit})
-          </h3>
+      <Card className="p-5 card-soft">
+        <div className="flex items-center gap-2 mb-4">
+          <div
+            className="w-7 h-7 rounded-md flex items-center justify-center"
+            style={{ backgroundColor: `${color}15` }}
+          >
+            <Icon size={16} style={{ color }} />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800">
+              {yLabel}
+            </h3>
+            <p className="text-[11px] text-gray-500">
+              Unit: {unit} • last 300 readings
+            </p>
+          </div>
         </div>
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={240}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
             <XAxis
               dataKey="timestamp"
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 10, fill: "#94A3B8" }}
               interval="preserveStartEnd"
               tickFormatter={(v) => String(v).slice(11, 16)}
+              axisLine={{ stroke: "#E2E8F0" }}
+              tickLine={false}
             />
-            <YAxis tick={{ fontSize: 10 }} domain={["auto", "auto"]} />
+            <YAxis
+              tick={{ fontSize: 10, fill: "#94A3B8" }}
+              domain={["auto", "auto"]}
+              axisLine={false}
+              tickLine={false}
+            />
             <Tooltip
-              contentStyle={{ fontSize: 11 }}
+              contentStyle={{
+                fontSize: 11,
+                borderRadius: 6,
+                border: "1px solid #E2E8F0",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+              }}
               labelFormatter={(v) => String(v)}
             />
-            <Legend wrapperStyle={{ fontSize: 10 }} />
+            <Legend
+              wrapperStyle={{ fontSize: 10, paddingTop: 8 }}
+              iconType="circle"
+            />
             {stations.map((sid) => (
               <Line
                 key={sid}
                 type="monotone"
                 dataKey={`${sid}_${paramKey}`}
-                name={`${sid} (${STATION_NAMES[sid] || sid})`}
+                name={STATION_NAMES[sid] || sid}
                 stroke={STATION_COLORS[sid]}
-                strokeWidth={1.5}
+                strokeWidth={1.75}
                 dot={false}
                 connectNulls
+                activeDot={{ r: 4 }}
               />
             ))}
           </LineChart>
