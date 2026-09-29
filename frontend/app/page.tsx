@@ -16,15 +16,17 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          Dashboard
+        </h1>
+        <p className="text-sm text-gray-500 mt-2">
           Real-time AWS anomaly detection and monitoring
         </p>
       </div>
 
       {/* Warning cards section */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+        <h2 className="section-title mb-5">
           Active Alerts
         </h2>
         <WarningCards onSelect={setSelectedAlert} />
