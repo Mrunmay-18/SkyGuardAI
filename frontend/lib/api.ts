@@ -46,6 +46,12 @@ export interface Alert {
   corrected_temperature: number;
   corrected_pressure: number;
   corrected_humidity: number;
+  decision_basis: string;
+  correction_confidence?: number;
+  correction_basis?: string;
+  counter_evidence?: string;
+  genuine_weather_event?: boolean;
+  event_class?: string;
   counter_reasoning: CounterReasoning;
   multivariate_analysis: MultivariateAnalysis;
   defensibility: Defensibility;

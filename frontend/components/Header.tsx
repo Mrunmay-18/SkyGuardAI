@@ -10,7 +10,9 @@ export default function Header() {
 
   const navLinks = [
     { href: "/", label: "Dashboard" },
-    { href: "/stations", label: "AWS Network" },
+    { href: "/network", label: "Network" },
+    { href: "/parameters", label: "Parameters" },
+    { href: "/stations", label: "AWS Stations" },
   ];
 
   return (
