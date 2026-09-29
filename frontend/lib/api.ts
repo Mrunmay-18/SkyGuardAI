@@ -115,3 +115,63 @@ export async function getObservations(): Promise<Observation[]> {
 export async function getObservationsByStation(id: string): Promise<Observation[]> {
   return fetchJson<Observation>(`/observations/${encodeURIComponent(id)}`);
 }
+// ----------------------------------------------------------------------
+// Fault Injection Lab
+// ----------------------------------------------------------------------
+export interface FaultTypesResponse {
+  fault_types: string[];
+  default_magnitudes: Record<string, number>;
+}
+
+export interface InjectionResult {
+  station_id: string;
+  fault_type: string;
+  magnitude: number;
+  original_reading: {
+    temperature: number;
+    pressure: number;
+    humidity: number;
+  };
+  modified_reading: {
+    temperature: number;
+    pressure: number;
+    humidity: number;
+  };
+  alert: Alert;
+}
+
+export async function getFaultTypes(): Promise<FaultTypesResponse> {
+  try {
+    const res = await fetch(`${BASE_URL}/injection-fault-types`);
+    if (!res.ok) {
+      console.error(`API error ${res.status}`);
+      return { fault_types: [], default_magnitudes: {} };
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    return { fault_types: [], default_magnitudes: {} };
+  }
+}
+
+export async function injectFault(
+  station_id: string,
+  fault_type: string,
+  magnitude: number
+): Promise<InjectionResult | null> {
+  try {
+    const res = await fetch(`${BASE_URL}/inject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ station_id, fault_type, magnitude }),
+    });
+    if (!res.ok) {
+      console.error(`API error ${res.status}`);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    return null;
+  }
+}

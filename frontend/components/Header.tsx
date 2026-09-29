@@ -12,6 +12,8 @@ export default function Header() {
     { href: "/", label: "Dashboard" },
     { href: "/network", label: "Network" },
     { href: "/parameters", label: "Parameters" },
+    { href: "/test", label: "Test AI" },
+    { href: "/maintenance", label: "Maintenance" },
     { href: "/stations", label: "AWS Stations" },
   ];
 

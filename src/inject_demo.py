@@ -141,9 +141,11 @@ def _run_pipeline_on_injection(
 
     # Apply fault
     if fault_type == "frozen_sensor":
-        # Copy the temperature of the previous row for the last row
-        prev_temp = context.loc[context.index[-2], "temperature"]
-        context.loc[last_idx, "temperature"] = prev_temp
+        # Simulate a stuck sensor: freeze the last 24 readings to a single value
+        # taken from ~6 hours ago. This triggers the QC persistence rule.
+        freeze_val = float(context.loc[context.index[-24], "temperature"]) if len(context) >= 24 else float(context.loc[context.index[0], "temperature"])
+        for i in range(max(0, len(context) - 24), len(context)):
+            context.loc[context.index[i], "temperature"] = freeze_val
     else:
         modified_row = _apply_fault(original_row, fault_type, magnitude)
         for col in ["temperature", "pressure", "humidity"]:

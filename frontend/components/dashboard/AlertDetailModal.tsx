@@ -10,6 +10,7 @@ import {
   Activity,
   Wrench,
   Shield,
+  BarChart3,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -26,6 +27,20 @@ const PRIORITY_STYLES: Record<string, { bg: string; text: string; label: string 
   P3: { bg: "#DBEAFE", text: "#1E40AF", label: "Routine" },
 };
 
+const SOURCE_COLORS: Record<string, string> = {
+  ml_if: "#8B5CF6",
+  qc_any: "#3B82F6",
+  temporal: "#F59E0B",
+  spatial: "#10B981",
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  ml_if: "Isolation Forest (ML)",
+  qc_any: "Rule-Based QC",
+  temporal: "Temporal Detector",
+  spatial: "Spatial Consistency",
+};
+
 export default function AlertDetailModal({
   alert,
   onClose,
@@ -34,9 +49,31 @@ export default function AlertDetailModal({
 
   const pri = PRIORITY_STYLES[alert.priority] || PRIORITY_STYLES.P3;
   const evidence = alert.evidence_breakdown || {};
-  const firedSources = Object.entries(evidence)
-    .filter(([, d]: any) => d?.fired)
-    .map(([k]) => k);
+
+  // Build feature importance list
+  const featureImportance = Object.entries(evidence)
+    .map(([source, data]: [string, any]) => {
+      const weight = typeof data?.weight === "number" ? data.weight : 1.0;
+      const fired = data?.fired === true;
+      return {
+        source,
+        label: SOURCE_LABELS[source] || source,
+        color: SOURCE_COLORS[source] || "#64748B",
+        weight,
+        fired,
+        contribution: fired ? weight : 0,
+      };
+    })
+    .sort((a, b) => b.contribution - a.contribution);
+
+  const maxContribution = Math.max(
+    ...featureImportance.map((f) => f.contribution),
+    0.01
+  );
+
+  const firedSources = featureImportance
+    .filter((f) => f.fired)
+    .map((f) => f.source);
 
   return (
     <div
@@ -86,7 +123,7 @@ export default function AlertDetailModal({
                   Temperature
                 </div>
                 <p className="text-sm font-semibold text-gray-900">
-                  {alert.temperature.toFixed(1)}°C
+                  {alert.temperature?.toFixed(1) ?? "—"}°C
                 </p>
                 {alert.corrected_temperature != null && (
                   <p className="text-xs text-teal-600 mt-1">
@@ -100,7 +137,7 @@ export default function AlertDetailModal({
                   Humidity
                 </div>
                 <p className="text-sm font-semibold text-gray-900">
-                  {alert.humidity.toFixed(0)}%
+                  {alert.humidity?.toFixed(0) ?? "—"}%
                 </p>
                 {alert.corrected_humidity != null && (
                   <p className="text-xs text-teal-600 mt-1">
@@ -114,7 +151,7 @@ export default function AlertDetailModal({
                   Pressure
                 </div>
                 <p className="text-sm font-semibold text-gray-900">
-                  {alert.pressure.toFixed(0)} hPa
+                  {alert.pressure?.toFixed(0) ?? "—"} hPa
                 </p>
                 {alert.corrected_pressure != null && (
                   <p className="text-xs text-teal-600 mt-1">
@@ -123,6 +160,55 @@ export default function AlertDetailModal({
                 )}
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* FEATURE IMPORTANCE CHART */}
+          <div>
+            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <BarChart3 size={13} />
+              Detector Contribution
+            </h4>
+            <div className="space-y-2.5">
+              {featureImportance.map((f) => {
+                const pct = (f.contribution / maxContribution) * 100;
+                return (
+                  <div key={f.source}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span
+                        className={`font-medium ${
+                          f.fired ? "text-gray-800" : "text-gray-400"
+                        }`}
+                      >
+                        {f.label}
+                      </span>
+                      <span
+                        className={`font-mono ${
+                          f.fired ? "text-gray-700" : "text-gray-400"
+                        }`}
+                      >
+                        {f.fired
+                          ? `weight ${f.weight.toFixed(1)}`
+                          : "not fired"}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: f.fired ? f.color : "#E5E7EB",
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              {alert.decision_basis}
+            </p>
           </div>
 
           <Separator />
@@ -140,22 +226,21 @@ export default function AlertDetailModal({
 
           <Separator />
 
-          {/* Evidence */}
+          {/* Evidence tags */}
           <div>
             <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-              Evidence Breakdown
+              Evidence
             </h4>
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-2">
               {firedSources.map((s) => (
                 <span
                   key={s}
                   className="px-2.5 py-1 rounded-full text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200"
                 >
-                  {s}
+                  {SOURCE_LABELS[s] || s}
                 </span>
               ))}
             </div>
-            <p className="text-xs text-gray-600">{alert.decision_basis}</p>
             <div className="flex items-center gap-4 mt-3 text-xs text-gray-600">
               <span>
                 Confidence: <b className="text-gray-900">{alert.confidence}</b>
