@@ -7,6 +7,8 @@ import {
   TrendingUp,
   Activity,
   CheckCircle,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getAlerts, getStations, type Alert, type Station } from "@/lib/api";
@@ -16,6 +18,47 @@ interface Insight {
   title: string;
   detail: string;
   color: string;
+}
+
+function getInsightStyle(color: string, icon: Insight["icon"]) {
+  if (color === "#EF4444" || icon === "warning") {
+    return {
+      cardClass: "bg-rose-50/30 border-rose-200/80 border-l-4 border-l-rose-500",
+      bubbleClass: "bg-rose-100/80 border-rose-200 text-rose-600",
+      tag: "Alert Cluster",
+      tagClass: "bg-rose-100/70 text-rose-700 border-rose-200/60",
+    };
+  }
+  if (color === "#F59E0B" || icon === "trend") {
+    return {
+      cardClass: "bg-amber-50/30 border-amber-200/80 border-l-4 border-l-amber-500",
+      bubbleClass: "bg-amber-100/80 border-amber-200 text-amber-600",
+      tag: "Trend",
+      tagClass: "bg-amber-100/70 text-amber-700 border-amber-200/60",
+    };
+  }
+  if (color === "#8B5CF6") {
+    return {
+      cardClass: "bg-purple-50/30 border-purple-200/80 border-l-4 border-l-purple-500",
+      bubbleClass: "bg-purple-100/80 border-purple-200 text-purple-600",
+      tag: "Hardware",
+      tagClass: "bg-purple-100/70 text-purple-700 border-purple-200/60",
+    };
+  }
+  if (color === "#3B82F6" || icon === "activity") {
+    return {
+      cardClass: "bg-sky-50/30 border-sky-200/80 border-l-4 border-l-sky-500",
+      bubbleClass: "bg-sky-100/80 border-sky-200 text-sky-600",
+      tag: "Temporal",
+      tagClass: "bg-sky-100/70 text-sky-700 border-sky-200/60",
+    };
+  }
+  return {
+    cardClass: "bg-emerald-50/30 border-emerald-200/80 border-l-4 border-l-emerald-500",
+    bubbleClass: "bg-emerald-100/80 border-emerald-200 text-emerald-600",
+    tag: "Nominal",
+    tagClass: "bg-emerald-100/70 text-emerald-700 border-emerald-200/60",
+  };
 }
 
 export default function PatternInsights() {
@@ -35,7 +78,8 @@ export default function PatternInsights() {
 
   if (loading) {
     return (
-      <Card className="p-6 text-center text-sm text-gray-500 card-soft">
+      <Card className="p-8 text-center text-sm text-stone-500 card-soft">
+        <Activity size={18} className="mx-auto text-teal-600 animate-spin mb-2" />
         Analyzing patterns…
       </Card>
     );
@@ -131,8 +175,8 @@ export default function PatternInsights() {
     });
   }
 
-  function renderIcon(icon: Insight["icon"], color: string) {
-    const props = { size: 18, style: { color } };
+  function renderIcon(icon: Insight["icon"]) {
+    const props = { size: 18 };
     switch (icon) {
       case "warning":
         return <AlertTriangle {...props} />;
@@ -146,41 +190,62 @@ export default function PatternInsights() {
   }
 
   return (
-    <Card className="p-5 card-soft">
-      <div className="mb-5">
-        <h3 className="text-sm font-semibold text-gray-800">
-          Pattern Insights
-        </h3>
-        <p className="text-xs text-gray-500 mt-0.5">
-          Auto-generated from current alert data
-        </p>
+    <Card className="card-soft overflow-hidden">
+      {/* Subtle Gradient Header */}
+      <div className="px-5 py-3.5 border-b border-stone-200/80 bg-gradient-to-r from-stone-50/80 via-white to-stone-50/30 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200/60 flex items-center justify-center text-teal-700 shadow-2xs">
+            <Sparkles size={16} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-stone-900 tracking-tight">
+              Pattern Insights
+            </h3>
+            <p className="text-[11px] text-stone-500 font-medium">
+              Automated anomaly pattern discovery & clustering
+            </p>
+          </div>
+        </div>
+        <span className="text-[10px] font-semibold text-teal-800 bg-teal-50 border border-teal-200/70 px-2.5 py-0.5 rounded-full">
+          AI Synthesis
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {insights.slice(0, 6).map((ins, i) => (
-          <div
-            key={i}
-            className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 fade-in"
-            style={{ borderLeft: `4px solid ${ins.color}` }}
-          >
-            <div className="flex items-start gap-3">
+      <div className="p-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {insights.slice(0, 6).map((ins, i) => {
+            const style = getInsightStyle(ins.color, ins.icon);
+            return (
               <div
-                className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: `${ins.color}15` }}
+                key={i}
+                className={`rounded-2xl p-4.5 border shadow-soft shadow-lift hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between ${style.cardClass}`}
               >
-                {renderIcon(ins.icon, ins.color)}
+                <div>
+                  <div className="flex items-start justify-between gap-3 mb-2.5">
+                    {/* Icon Bubble */}
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs ${style.bubbleClass}`}
+                    >
+                      {renderIcon(ins.icon)}
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-2xs ${style.tagClass}`}
+                    >
+                      {style.tag}
+                    </span>
+                  </div>
+
+                  <p className="font-bold text-sm text-stone-900 mb-1 leading-snug">
+                    {ins.title}
+                  </p>
+                  <p className="text-xs text-stone-600 leading-relaxed">
+                    {ins.detail}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-gray-900 mb-1 leading-snug">
-                  {ins.title}
-                </p>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  {ins.detail}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </div>
     </Card>
   );

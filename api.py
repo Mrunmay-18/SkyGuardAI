@@ -128,15 +128,27 @@ def get_fault_types():
     }
 
 
+# Cache the fast injection helper so it's built once per process.
+_fast_injector = None
+
+
+def _get_fast_injector():
+    global _fast_injector
+    if _fast_injector is None:
+        from inject_demo_fast import FastInjector
+        _fast_injector = FastInjector()
+    return _fast_injector
+
+
 @app.post("/api/inject")
 def inject_fault(req: InjectionRequest):
     """
-    Inject a synthetic fault and run the real pipeline.
-    Returns the actual detection alert.
+    Inject a synthetic fault and run detection.
+    Uses a pre-computed pipeline baseline for speed.
     """
     try:
-        from inject_demo import inject_and_detect
-        result = inject_and_detect(
+        injector = _get_fast_injector()
+        result = injector.inject(
             station_id=req.station_id,
             fault_type=req.fault_type,
             magnitude=req.magnitude,

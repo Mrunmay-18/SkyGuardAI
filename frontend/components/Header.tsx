@@ -19,32 +19,35 @@ export default function Header() {
   ];
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm backdrop-blur-sm bg-white/95">
-      <Link href="/" className="flex items-center gap-2.5 group">
-        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-          <Radar size={20} className="text-white" />
+    <header className="h-16 flex items-center justify-between px-6 bg-white/90 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-40 shadow-soft transition-all">
+      <Link href="/" className="flex items-center gap-3 group">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 flex items-center justify-center shadow-sm shadow-teal-900/15 ring-1 ring-white/30 group-hover:shadow-md group-hover:scale-[1.03] transition-all duration-200">
+          <Radar size={19} className="text-teal-50 transition-transform duration-300 group-hover:rotate-12" />
         </div>
         <div className="flex flex-col">
-          <span className="font-bold text-base text-gray-900 leading-tight tracking-tight">
-            SkyGuard AI
-          </span>
-          <span className="text-[11px] text-gray-500 leading-tight font-medium">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-base text-stone-900 leading-tight tracking-tight">
+              SkyGuard AI
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-teal-600 animate-pulse" />
+          </div>
+          <span className="text-[11px] text-stone-500 leading-tight font-medium">
             IMD AWS Monitoring
           </span>
         </div>
       </Link>
 
-      <nav className="flex items-center gap-1">
+      <nav className="flex items-center gap-1 overflow-x-auto py-1">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm px-3.5 py-2 rounded-md transition-all duration-150 font-medium ${
+              className={`text-sm px-3.5 py-1.5 rounded-full transition-all duration-150 font-medium ${
                 isActive
-                  ? "text-teal-700 bg-teal-50"
-                  : "text-gray-600 hover:text-teal-700 hover:bg-gray-50"
+                  ? "text-teal-800 bg-teal-50 font-semibold ring-1 ring-teal-600/20 shadow-xs"
+                  : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/70"
               }`}
             >
               {link.label}

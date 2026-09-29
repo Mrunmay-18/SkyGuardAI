@@ -6,18 +6,62 @@ import Link from "next/link";
 import {
   AlertTriangle,
   CloudSun,
+  CloudRain,
+  Sun,
   ArrowRight,
   Shield,
   Activity,
+  Thermometer,
+  Droplet,
+  Zap,
+  Snowflake,
+  CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getAlerts, getStations, type Alert, type Station } from "@/lib/api";
 
-const PRIORITY_STYLES: Record<string, { color: string; label: string }> = {
-  P1: { color: "#EF4444", label: "Critical" },
-  P2: { color: "#F59E0B", label: "High" },
-  P3: { color: "#3B82F6", label: "Routine" },
+const PRIORITY_STYLES: Record<string, { label: string; badgeClass: string }> = {
+  P1: {
+    label: "Critical",
+    badgeClass: "text-rose-700 bg-rose-50 border-rose-200/80",
+  },
+  P2: {
+    label: "High",
+    badgeClass: "text-amber-700 bg-amber-50 border-amber-200/80",
+  },
+  P3: {
+    label: "Routine",
+    badgeClass: "text-sky-700 bg-sky-50 border-sky-200/80",
+  },
 };
+
+function getFaultIcon(anomalyType: string) {
+  const t = anomalyType.toLowerCase();
+  if (t.includes("frozen") || t.includes("freeze") || t.includes("ice") || t.includes("cold")) {
+    return Snowflake;
+  }
+  if (t.includes("temperature") || t.includes("temp") || t.includes("spike") || t.includes("heat")) {
+    return Thermometer;
+  }
+  if (t.includes("humidity") || t.includes("rain") || t.includes("droplet") || t.includes("moisture")) {
+    return Droplet;
+  }
+  if (t.includes("power") || t.includes("voltage") || t.includes("battery") || t.includes("collapse")) {
+    return Zap;
+  }
+  return AlertTriangle;
+}
+
+function getWeatherIcon(anomalyType: string) {
+  const t = anomalyType.toLowerCase();
+  if (t.includes("rain") || t.includes("precipitation") || t.includes("storm") || t.includes("monsoon")) {
+    return CloudRain;
+  }
+  if (t.includes("temp") || t.includes("heat") || t.includes("sun") || t.includes("wave")) {
+    return Sun;
+  }
+  return CloudSun;
+}
 
 export default function FaultVsWeatherSummary() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -36,7 +80,8 @@ export default function FaultVsWeatherSummary() {
 
   if (loading) {
     return (
-      <Card className="p-6 text-sm text-gray-500 text-center card-soft">
+      <Card className="p-8 text-sm text-stone-500 text-center card-soft">
+        <Activity size={20} className="mx-auto text-teal-600 animate-spin mb-2" />
         Analyzing alerts…
       </Card>
     );
@@ -102,127 +147,153 @@ export default function FaultVsWeatherSummary() {
   return (
     <Card className="card-soft overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-teal-50/40 to-transparent">
-        <div className="flex items-center gap-2">
-          <Shield size={16} className="text-teal-600" />
-          <h3 className="text-sm font-semibold text-gray-800">
+      <div className="px-5 py-3.5 border-b border-stone-200/80 flex items-center justify-between bg-gradient-to-r from-teal-50/60 via-white to-stone-50/40">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-200/60 flex items-center justify-center text-teal-700">
+            <Shield size={15} />
+          </div>
+          <h3 className="text-sm font-semibold text-stone-900 tracking-tight">
             Today&apos;s Alerts — Sensor Faults vs Weather Events
           </h3>
         </div>
         <Link
           href="/reality-check"
-          className="text-xs text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1"
+          className="text-xs text-teal-700 hover:text-teal-800 bg-teal-50/80 hover:bg-teal-100/80 px-2.5 py-1 rounded-full border border-teal-200/60 transition-colors font-medium flex items-center gap-1.5"
         >
-          See Reality Check demo
+          Reality Check Demo
           <ArrowRight size={12} />
         </Link>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2">
-        {/* FAULTS column */}
-        <div className="p-5 border-r-0 md:border-r border-gray-100">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle size={16} className="text-red-600" />
-            <h4 className="text-xs font-bold text-red-700 uppercase tracking-wider">
-              Sensor Faults ({faultGroups.length})
-            </h4>
+      {/* Two-column layout with soft divider between columns */}
+      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-stone-200/80">
+        {/* FAULTS column: red-tinted card background */}
+        <div className="p-5 bg-gradient-to-b from-rose-50/40 to-transparent">
+          <div className="flex items-center justify-between mb-3.5">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-rose-100/80 border border-rose-200/70 flex items-center justify-center text-rose-700">
+                <AlertTriangle size={13} />
+              </div>
+              <h4 className="text-xs font-bold text-rose-800 uppercase tracking-wider">
+                Sensor Faults ({faultGroups.length})
+              </h4>
+            </div>
+            <span className="text-[10px] font-semibold text-rose-700 bg-rose-100/70 border border-rose-200/60 px-2 py-0.5 rounded-full">
+              Hardware
+            </span>
           </div>
 
           {faultGroups.length === 0 ? (
-            <p className="text-xs text-gray-400 italic">
+            <div className="p-6 text-center rounded-xl bg-white/70 border border-rose-100/80 text-xs text-stone-500">
+              <CheckCircle2 size={22} className="mx-auto text-emerald-500 mb-1.5" />
               No sensor faults detected
-            </p>
+            </div>
           ) : (
             <ul className="space-y-2">
               {faultGroups.slice(0, 6).map((g, i) => {
                 const pri = PRIORITY_STYLES[g.priority] || PRIORITY_STYLES.P3;
+                const RowIcon = getFaultIcon(g.anomaly_type);
                 return (
                   <li
                     key={i}
-                    className="flex items-center justify-between text-xs border-l-2 pl-2.5 py-1"
-                    style={{ borderLeftColor: pri.color }}
+                    className="flex items-center justify-between gap-3 text-xs bg-white/90 hover:bg-white p-2.5 rounded-xl border border-rose-100/90 shadow-2xs hover:shadow-xs transition-all"
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-800 truncate">
-                        {stationName(g.station_id)}
-                      </p>
-                      <p className="text-gray-500 text-[11px] truncate">
-                        {g.anomaly_type}
-                      </p>
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-7 h-7 rounded-lg bg-rose-50 border border-rose-200/60 flex items-center justify-center shrink-0 text-rose-600">
+                        <RowIcon size={14} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-stone-900 truncate">
+                          {stationName(g.station_id)}
+                        </p>
+                        <p className="text-stone-500 text-[11px] truncate">
+                          {g.anomaly_type}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {g.count > 1 && (
-                        <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-bold text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded-full border border-stone-200/70">
                           ×{g.count}
                         </span>
                       )}
                       <span
-                        className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                        style={{
-                          color: pri.color,
-                          backgroundColor: `${pri.color}15`,
-                        }}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-2xs ${pri.badgeClass}`}
                       >
-                        {g.priority}
+                        {pri.label}
                       </span>
                     </div>
                   </li>
                 );
               })}
               {faultGroups.length > 6 && (
-                <li className="text-xs text-gray-500 pt-1">
-                  + {faultGroups.length - 6} more
+                <li className="text-xs text-stone-500 pt-1 text-center font-medium">
+                  + {faultGroups.length - 6} more sensor faults
                 </li>
               )}
             </ul>
           )}
         </div>
 
-        {/* WEATHER column */}
-        <div className="p-5 bg-green-50/30">
-          <div className="flex items-center gap-2 mb-3">
-            <CloudSun size={16} className="text-green-700" />
-            <h4 className="text-xs font-bold text-green-700 uppercase tracking-wider">
-              Weather Events ({weatherGroups.length})
-            </h4>
+        {/* WEATHER column: green-tinted card background */}
+        <div className="p-5 bg-gradient-to-b from-emerald-50/40 to-transparent">
+          <div className="flex items-center justify-between mb-3.5">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-emerald-100/80 border border-emerald-200/70 flex items-center justify-center text-emerald-700">
+                <CloudSun size={13} />
+              </div>
+              <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                Weather Events ({weatherGroups.length})
+              </h4>
+            </div>
+            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 border border-emerald-200/60 px-2 py-0.5 rounded-full">
+              Atmospheric
+            </span>
           </div>
 
           {weatherGroups.length === 0 ? (
-            <p className="text-xs text-gray-400 italic">
+            <div className="p-6 text-center rounded-xl bg-white/70 border border-emerald-100/80 text-xs text-stone-500">
+              <CloudSun size={22} className="mx-auto text-emerald-500 mb-1.5" />
               No regional weather events detected
-            </p>
+            </div>
           ) : (
             <ul className="space-y-2">
-              {weatherGroups.slice(0, 6).map((g, i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between text-xs border-l-2 pl-2.5 py-1"
-                  style={{ borderLeftColor: "#10B981" }}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-800 truncate">
-                      {stationName(g.station_id)}
-                    </p>
-                    <p className="text-gray-500 text-[11px] truncate">
-                      {g.anomaly_type}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    {g.count > 1 && (
-                      <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                        ×{g.count}
+              {weatherGroups.slice(0, 6).map((g, i) => {
+                const RowIcon = getWeatherIcon(g.anomaly_type);
+                return (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between gap-3 text-xs bg-white/90 hover:bg-white p-2.5 rounded-xl border border-emerald-100/90 shadow-2xs hover:shadow-xs transition-all"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-200/60 flex items-center justify-center shrink-0 text-emerald-600">
+                        <RowIcon size={14} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-stone-900 truncate">
+                          {stationName(g.station_id)}
+                        </p>
+                        <p className="text-stone-500 text-[11px] truncate">
+                          {g.anomaly_type}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {g.count > 1 && (
+                        <span className="text-[10px] font-bold text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded-full border border-stone-200/70">
+                          ×{g.count}
+                        </span>
+                      )}
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-emerald-800 bg-emerald-100/80 border border-emerald-200/80 shadow-2xs">
+                        Weather Event
                       </span>
-                    )}
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded text-green-700 bg-green-100">
-                      Weather
-                    </span>
-                  </div>
-                </li>
-              ))}
+                    </div>
+                  </li>
+                );
+              })}
               {weatherGroups.length > 6 && (
-                <li className="text-xs text-gray-500 pt-1">
-                  + {weatherGroups.length - 6} more
+                <li className="text-xs text-stone-500 pt-1 text-center font-medium">
+                  + {weatherGroups.length - 6} more weather events
                 </li>
               )}
             </ul>
@@ -231,11 +302,11 @@ export default function FaultVsWeatherSummary() {
       </div>
 
       {/* Footer caption */}
-      <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-100">
-        <p className="text-[11px] text-gray-500 flex items-center gap-1.5">
-          <Activity size={11} />
+      <div className="px-5 py-2.5 bg-stone-50/80 border-t border-stone-200/80">
+        <p className="text-[11px] text-stone-500 flex items-center gap-1.5">
+          <Activity size={12} className="text-teal-600" />
           Classified using spatial consistency (isolated vs common event) and
-          physics coupling checks. Live from <code className="text-[10px]">alerts.json</code>.
+          physics coupling checks. Live from <code className="text-[10px] bg-stone-200/60 text-stone-800 px-1 py-0.5 rounded font-mono">alerts.json</code>.
         </p>
       </div>
     </Card>

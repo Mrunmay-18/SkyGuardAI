@@ -9,10 +9,16 @@ import {
   AlertTriangle,
   CheckCircle,
   Loader2,
+  Radio,
+  Sliders,
+  Sparkles,
+  Layers,
+  Thermometer,
+  Gauge,
+  Droplet,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   getStations,
@@ -24,9 +30,9 @@ import {
 } from "@/lib/api";
 
 const PRIORITY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  P1: { bg: "#FEE2E2", text: "#991B1B", label: "Critical" },
-  P2: { bg: "#FEF3C7", text: "#92400E", label: "High" },
-  P3: { bg: "#DBEAFE", text: "#1E40AF", label: "Routine" },
+  P1: { bg: "bg-rose-50 border-rose-200/80", text: "text-rose-700", label: "Critical" },
+  P2: { bg: "bg-amber-50 border-amber-200/80", text: "text-amber-700", label: "High" },
+  P3: { bg: "bg-sky-50 border-sky-200/80", text: "text-sky-700", label: "Routine" },
 };
 
 function humanizeFault(s: string) {
@@ -79,7 +85,7 @@ export default function TestPage() {
     if (res) {
       setResult(res);
     } else {
-      setError("Injection failed. Check the API server is running.");
+      setError("Injection failed. Check that the API server is running on port 8000.");
     }
     setLoading(false);
   }
@@ -90,38 +96,45 @@ export default function TestPage() {
   return (
     <div className="space-y-8 fade-in">
       {/* Page header */}
-      <div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center">
-            <FlaskConical size={22} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-              Fault Injection Lab
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Test SkyGuard AI with a synthetic sensor fault
-            </p>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-600 to-teal-800 flex items-center justify-center text-white shadow-soft">
+          <FlaskConical size={20} />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
+            Fault Injection Lab
+          </h1>
+          <p className="text-sm text-stone-500 mt-0.5 font-medium">
+            Test SkyGuard AI in real-time with synthetic sensor fault injections
+          </p>
         </div>
       </div>
 
-      {/* Control panel */}
-      <Card className="p-6 card-soft">
-        <h2 className="text-sm font-semibold text-gray-800 mb-4">
-          Configure Injection
-        </h2>
+      {/* Control panel with visual grouping (Station / Fault / Magnitude) */}
+      <Card className="p-6 card-soft rounded-2xl border border-stone-200/80 shadow-soft bg-white">
+        <div className="flex items-center justify-between mb-5 pb-3 border-b border-stone-100">
+          <div className="flex items-center gap-2">
+            <Sliders size={16} className="text-teal-700" />
+            <h2 className="text-sm font-bold text-stone-900 tracking-tight">
+              Injection Control Configuration
+            </h2>
+          </div>
+          <span className="text-[10px] font-semibold text-teal-800 bg-teal-50 border border-teal-200/70 px-2.5 py-0.5 rounded-full">
+            Real-Time Simulator
+          </span>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Station dropdown */}
-          <div>
-            <label className="text-xs font-medium text-gray-600 mb-1.5 block">
-              Station
-            </label>
+          {/* Group 1: Station Selection */}
+          <div className="p-4 rounded-xl bg-stone-50/70 border border-stone-200/70 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-600">
+              <Radio size={13} className="text-teal-600" />
+              <span>Target Station</span>
+            </div>
             <select
               value={stationId}
               onChange={(e) => setStationId(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm bg-white text-stone-800 font-medium focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20 shadow-2xs transition-all cursor-pointer"
             >
               {stations.map((s) => (
                 <option key={s.station_id} value={s.station_id}>
@@ -129,17 +142,21 @@ export default function TestPage() {
                 </option>
               ))}
             </select>
+            <p className="text-[11px] text-stone-400">
+              Station undergoing simulated telemetry failure
+            </p>
           </div>
 
-          {/* Fault type dropdown */}
-          <div>
-            <label className="text-xs font-medium text-gray-600 mb-1.5 block">
-              Fault Type
-            </label>
+          {/* Group 2: Fault Type */}
+          <div className="p-4 rounded-xl bg-stone-50/70 border border-stone-200/70 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-600">
+              <Layers size={13} className="text-teal-600" />
+              <span>Fault Signature</span>
+            </div>
             <select
               value={faultType}
               onChange={(e) => setFaultType(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm bg-white text-stone-800 font-medium focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20 shadow-2xs transition-all cursor-pointer"
             >
               {faultInfo.fault_types.map((ft) => (
                 <option key={ft} value={ft}>
@@ -147,48 +164,62 @@ export default function TestPage() {
                 </option>
               ))}
             </select>
+            <p className="text-[11px] text-stone-400">
+              Select perturbation type injected into sensors
+            </p>
           </div>
 
-          {/* Magnitude slider */}
-          <div>
-            <label className="text-xs font-medium text-gray-600 mb-1.5 block">
-              Magnitude:{" "}
-              <span className="font-mono font-semibold text-teal-700">
-                {magnitude}
+          {/* Group 3: Magnitude Slider */}
+          <div className="p-4 rounded-xl bg-stone-50/70 border border-stone-200/70 space-y-2">
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-stone-600">
+              <div className="flex items-center gap-1.5">
+                <Sparkles size={13} className="text-teal-600" />
+                <span>Magnitude</span>
+              </div>
+              <span className="font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200/80">
+                ±{magnitude}
               </span>
-            </label>
-            <input
-              type="range"
-              min={1}
-              max={40}
-              value={magnitude}
-              onChange={(e) => setMagnitude(Number(e.target.value))}
-              className="w-full accent-teal-600"
-            />
+            </div>
+            <div className="pt-2">
+              <input
+                type="range"
+                min={1}
+                max={40}
+                value={magnitude}
+                onChange={(e) => setMagnitude(Number(e.target.value))}
+                className="w-full accent-teal-700 cursor-pointer"
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-stone-400 font-mono">
+              <span>Mild (1)</span>
+              <span>Default ({faultInfo.default_magnitudes[faultType] ?? 15})</span>
+              <span>Severe (40)</span>
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 flex items-center gap-3">
+        {/* Action Button: Gradient Teal, Larger, With Icon */}
+        <div className="mt-6 flex flex-wrap items-center gap-4 pt-4 border-t border-stone-100">
           <Button
             onClick={runInjection}
             disabled={loading || !stationId || !faultType}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            className="h-11 px-6 rounded-xl bg-gradient-to-r from-teal-600 to-teal-800 hover:from-teal-700 hover:to-teal-900 text-white font-semibold text-sm shadow-soft cursor-pointer transition-all hover:shadow-md"
           >
             {loading ? (
               <>
                 <Loader2 size={16} className="mr-2 animate-spin" />
-                Running detection…
+                Simulating Pipeline Detection…
               </>
             ) : (
               <>
-                <Zap size={16} className="mr-2" />
-                Inject & Detect
+                <Zap size={16} className="mr-2 text-teal-200" />
+                Inject Fault & Run Detection
               </>
             )}
           </Button>
 
           {error && (
-            <span className="text-sm text-red-600 flex items-center gap-1">
+            <span className="text-xs text-rose-600 font-medium flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-3 py-2 rounded-lg">
               <AlertTriangle size={14} />
               {error}
             </span>
@@ -198,176 +229,204 @@ export default function TestPage() {
 
       {/* Empty state */}
       {!result && !loading && (
-        <Card className="p-12 text-center card-soft">
-          <FlaskConical
-            size={40}
-            className="mx-auto text-gray-300 mb-3"
-          />
-          <p className="text-sm text-gray-500">
-            Select a station and fault type above, then click Inject & Detect.
+        <Card className="p-12 text-center card-soft rounded-2xl border border-stone-200/80 bg-gradient-to-b from-white to-stone-50/50">
+          <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200/70 mx-auto flex items-center justify-center text-teal-600 mb-3 shadow-2xs">
+            <FlaskConical size={26} />
+          </div>
+          <h3 className="text-base font-bold text-stone-900 mb-1">
+            Ready to Simulate
+          </h3>
+          <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
+            Configure the station and anomaly pattern above, then trigger detection to trace how the ensemble corroborates or rejects the signal.
           </p>
         </Card>
       )}
 
-      {/* Result */}
+      {/* Result Panel: Animated Fade-in */}
       {result && (
-        <div className="space-y-6 fade-in">
-          {/* Original vs Modified reading */}
-          <Card className="p-6 card-soft">
-            <h2 className="text-sm font-semibold text-gray-800 mb-4">
-              Reading Change — {stationName}
-            </h2>
-            <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-6 animate-fade-in">
+          {/* Reading change with animated arrow */}
+          <Card className="p-5 card-soft rounded-2xl border border-stone-200/80 shadow-soft bg-white">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-stone-900 tracking-tight">
+                Reading Perturbation — {stationName}
+              </h2>
+              <span className="text-[10px] font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+                Pre vs Post Injection
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
                 {
                   label: "Temperature",
                   unit: "°C",
                   orig: result.original_reading.temperature,
                   mod: result.modified_reading.temperature,
+                  Icon: Thermometer,
+                  iconColor: "text-rose-500",
                 },
                 {
                   label: "Pressure",
                   unit: "hPa",
                   orig: result.original_reading.pressure,
                   mod: result.modified_reading.pressure,
+                  Icon: Gauge,
+                  iconColor: "text-blue-500",
                 },
                 {
                   label: "Humidity",
                   unit: "%",
                   orig: result.original_reading.humidity,
                   mod: result.modified_reading.humidity,
+                  Icon: Droplet,
+                  iconColor: "text-emerald-500",
                 },
               ].map((p) => {
                 const delta = p.mod - p.orig;
                 const changed = Math.abs(delta) > 0.01;
+                const Icon = p.Icon;
+
                 return (
                   <div
                     key={p.label}
-                    className="border border-gray-200 rounded-lg p-4"
+                    className={`rounded-xl p-4 border transition-all ${
+                      changed
+                        ? "bg-rose-50/30 border-rose-200/90 shadow-2xs"
+                        : "bg-stone-50/60 border-stone-200/70"
+                    }`}
                   >
-                    <p className="text-xs text-gray-500 mb-2">{p.label}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500 line-through">
-                        {p.orig.toFixed(1)}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-600">
+                        <Icon size={13} className={p.iconColor} />
+                        <span>{p.label}</span>
+                      </div>
+                      {changed && (
+                        <span className="text-[10px] font-bold text-rose-700 bg-rose-100/80 border border-rose-200 px-1.5 py-0.2 rounded-full">
+                          {delta > 0 ? "+" : ""}
+                          {delta.toFixed(1)} {p.unit}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Animated arrow between original and modified */}
+                    <div className="flex items-center justify-between gap-2 pt-1 font-mono">
+                      <span className="text-xs text-stone-400 line-through">
+                        {p.orig.toFixed(1)} {p.unit}
                       </span>
-                      <ArrowRight size={14} className="text-gray-400" />
+                      <div className="w-7 h-7 rounded-full bg-white border border-stone-200 flex items-center justify-center shrink-0 shadow-2xs">
+                        <ArrowRight
+                          size={14}
+                          className={changed ? "text-rose-600 animate-pulse" : "text-stone-400"}
+                        />
+                      </div>
                       <span
-                        className={`text-base font-bold ${
-                          changed ? "text-red-600" : "text-gray-900"
+                        className={`text-sm font-bold ${
+                          changed ? "text-rose-700" : "text-stone-800"
                         }`}
                       >
                         {p.mod.toFixed(1)} {p.unit}
                       </span>
                     </div>
-                    {changed && (
-                      <p className="text-xs text-red-600 mt-1 font-medium">
-                        {delta > 0 ? "+" : ""}
-                        {delta.toFixed(1)}
-                      </p>
-                    )}
                   </div>
                 );
               })}
             </div>
           </Card>
 
-          {/* Detection result */}
-          <Card className="p-6 card-soft border-l-4 border-l-red-500">
+          {/* Detection Result Card */}
+          <Card className="p-6 card-soft rounded-2xl border-l-4 border-l-rose-500 border-stone-200/80 shadow-soft bg-white">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle size={18} className="text-red-600" />
-                  <span className="text-xs font-bold text-red-700 uppercase tracking-wider">
-                    Anomaly Detected
+                <div className="flex items-center gap-2 mb-1.5">
+                  <CheckCircle size={18} className="text-rose-600" />
+                  <span className="text-xs font-bold text-rose-700 uppercase tracking-wider">
+                    Anomaly Successfully Intercepted
                   </span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">
+                <h3 className="text-xl font-bold text-stone-900 tracking-tight">
                   {result.alert.anomaly_type}
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  {result.alert.timestamp}
+                <p className="text-xs text-stone-500 mt-0.5 font-medium">
+                  Timestamp: {result.alert.timestamp}
                 </p>
               </div>
+
               {result.alert.priority && PRIORITY_STYLES[result.alert.priority] && (
                 <span
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                  style={{
-                    backgroundColor:
-                      PRIORITY_STYLES[result.alert.priority].bg,
-                    color: PRIORITY_STYLES[result.alert.priority].text,
-                  }}
+                  className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                    PRIORITY_STYLES[result.alert.priority].bg
+                  } ${PRIORITY_STYLES[result.alert.priority].text}`}
                 >
-                  {PRIORITY_STYLES[result.alert.priority].label} (
-                  {result.alert.priority})
+                  {PRIORITY_STYLES[result.alert.priority].label} ({result.alert.priority})
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-6 text-sm mb-4">
-              <span className="text-gray-600">
-                Confidence:{" "}
-                <b className="text-gray-900">{result.alert.confidence}</b>
+            {/* Chips */}
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-teal-50 text-teal-800 border border-teal-200/80">
+                Confidence: <b className="font-bold">{result.alert.confidence}%</b>
               </span>
-              <span className="text-gray-600">
-                Trust:{" "}
-                <b className="text-gray-900">{result.alert.trust_score}</b>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80">
+                Trust Score: <b className="font-bold">{result.alert.trust_score}/100</b>
               </span>
-              <span className="text-gray-600">
-                Severity:{" "}
-                <b className="text-gray-900">{result.alert.severity}</b>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-stone-100 text-stone-700 border border-stone-200">
+                Severity: <b className="font-bold">{result.alert.severity}</b>
               </span>
             </div>
 
             <Separator className="my-4" />
 
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-              Physical Reasoning
-            </h4>
-            <p className="text-sm text-gray-700 leading-relaxed mb-4">
-              {result.alert.physical_reasoning}
-            </p>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
+                  Physical Reasoning & Verification
+                </h4>
+                <p className="text-xs text-stone-700 leading-relaxed bg-stone-50/70 p-3 rounded-xl border border-stone-200/60 font-medium">
+                  {result.alert.physical_reasoning}
+                </p>
+              </div>
 
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-              Evidence
-            </h4>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {Object.entries(result.alert.evidence_breakdown || {})
-                .filter(([, d]: any) => d?.fired)
-                .map(([source]) => (
-                  <span
-                    key={source}
-                    className="px-2.5 py-1 rounded-full text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200"
-                  >
-                    {source}
-                  </span>
-                ))}
-            </div>
-            <p className="text-xs text-gray-600 mb-4">
-              {result.alert.decision_basis}
-            </p>
+              <div>
+                <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">
+                  Corroborating Evidence Sources
+                </h4>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {Object.entries(result.alert.evidence_breakdown || {})
+                    .filter(([, d]: any) => d?.fired)
+                    .map(([source]) => (
+                      <span
+                        key={source}
+                        className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 border border-teal-200/70 shadow-2xs"
+                      >
+                        ✓ {source}
+                      </span>
+                    ))}
+                </div>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  {result.alert.decision_basis}
+                </p>
+              </div>
 
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-              Physics Coupling Check
-            </h4>
-            <p className="text-sm text-gray-700 leading-relaxed mb-4">
-              {result.alert.multivariate_analysis?.reason ||
-                "Not available"}
-            </p>
+              <div>
+                <h4 className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
+                  Weather Correlation Verdict
+                </h4>
+                <p className="text-xs text-stone-700 leading-relaxed bg-emerald-50/40 p-3 rounded-xl border border-emerald-200/60 font-medium">
+                  {result.alert.weather_verdict_reason}
+                </p>
+              </div>
 
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-              Verdict
-            </h4>
-            <p className="text-sm text-gray-700 leading-relaxed mb-4">
-              {result.alert.weather_verdict_reason}
-            </p>
-
-            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-              <h4 className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-2">
-                Recommended Action
-              </h4>
-              <p className="text-sm text-teal-900 font-medium">
-                {result.alert.maintenance_recommendation}
-              </p>
+              {/* Maintenance recommendation */}
+              <div className="bg-gradient-to-r from-teal-50 to-teal-100/40 border border-teal-200/90 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-1">
+                  Automated Maintenance Protocol
+                </h4>
+                <p className="text-xs text-teal-950 font-medium leading-relaxed">
+                  {result.alert.maintenance_recommendation}
+                </p>
+              </div>
             </div>
           </Card>
         </div>

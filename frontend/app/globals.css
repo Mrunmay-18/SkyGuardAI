@@ -1,16 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F7F8F6;
-  --foreground: #0F172A;
-  --accent: #0F766E;
-  --accent-soft: #CCFBF1;
-  --muted: #64748B;
-  --border: #E2E8F0;
+  /* Warm off-white background & surfaces */
+  --background: #FAFAF8;
+  --surface: #FFFFFF;
   --card-bg: #FFFFFF;
-  --warning: #F59E0B;
-  --danger: #DC2626;
+  --foreground: #0F172A;
+  --foreground-muted: #64748B;
+  --border: #E2E8F0;
+  --border-subtle: #F1F5F9;
+
+  /* Primary Deep Teal Accent (#0F766E) */
+  --accent: #0F766E;
+  --accent-hover: #115E59;
+  --accent-light: #14B8A6;
+  --accent-soft: #CCFBF1;
+  --accent-subtle: #F0FDFA;
+  --accent-ring: rgba(15, 118, 110, 0.15);
+
+  /* Semantic Status Tokens */
   --success: #059669;
+  --success-bg: #ECFDF5;
+  --success-border: #A7F3D0;
+  --success-text: #065F46;
+
+  --warning: #D97706;
+  --warning-bg: #FFFBEB;
+  --warning-border: #FDE68A;
+  --warning-text: #92400E;
+
+  --danger: #DC2626;
+  --danger-bg: #FEF2F2;
+  --danger-border: #FECACA;
+  --danger-text: #991B1B;
+
+  --info: #0284C7;
+  --info-bg: #F0F9FF;
+  --info-border: #BAE6FD;
+  --info-text: #075985;
+
+  /* Elevation Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.04);
@@ -27,40 +56,118 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Soft card elevation */
+/* Soft Elevation Utilities */
+.shadow-soft {
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+}
+
+.shadow-lift {
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.shadow-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08), 0 3px 8px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* Gradient Header Utility */
+.gradient-header {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.gradient-header-teal {
+  background: linear-gradient(135deg, rgba(240, 253, 250, 0.8) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-bottom: 1px solid rgba(204, 251, 241, 0.7);
+}
+
+/* Soft Card Elevation */
 .card-soft {
   background: var(--card-bg);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+  border-radius: 0.75rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .card-soft:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 20px -3px rgba(15, 23, 42, 0.07);
 }
 
 /* Section headers */
 .section-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1E293B;
-  letter-spacing: -0.01em;
+  color: #0F172A;
+  letter-spacing: -0.015em;
 }
 
-/* Animations */
+/* Keyframes & Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes pulse-ring {
-  0% { transform: scale(1); opacity: 0.7; }
-  100% { transform: scale(2.5); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
 }
 
 @keyframes radar-sweep {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+.animate-fade-in,
+.fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up,
+.slide-up {
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-down,
+.slide-down {
+  animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .pulse-marker {
@@ -71,12 +178,27 @@ body {
   animation: radar-sweep 3s linear infinite;
 }
 
-.fade-in {
-  animation: fade-in 0.4s ease-out;
+/* Subtle custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}

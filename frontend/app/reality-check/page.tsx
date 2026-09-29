@@ -10,6 +10,9 @@ import {
   RefreshCw,
   Loader2,
   MapPin,
+  Sparkles,
+  ShieldAlert,
+  ShieldCheck,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,9 +63,9 @@ interface ComparisonResponse {
 }
 
 const PRIORITY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  P1: { bg: "#FEE2E2", text: "#991B1B", label: "Critical" },
-  P2: { bg: "#FEF3C7", text: "#92400E", label: "High" },
-  P3: { bg: "#DBEAFE", text: "#1E40AF", label: "Routine" },
+  P1: { bg: "bg-rose-50 border-rose-200/80", text: "text-rose-700", label: "Critical" },
+  P2: { bg: "bg-amber-50 border-amber-200/80", text: "text-amber-700", label: "High" },
+  P3: { bg: "bg-sky-50 border-sky-200/80", text: "text-sky-700", label: "Routine" },
 };
 
 export default function RealityCheckPage() {
@@ -91,34 +94,46 @@ export default function RealityCheckPage() {
 
   if (loading && !data) {
     return (
-      <div className="text-sm text-gray-500 py-8 text-center">
-        Running both scenarios through the pipeline…
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-stone-500 animate-fade-in">
+        <Loader2 size={24} className="animate-spin text-teal-600" />
+        <p className="text-sm font-medium">
+          Running dual scenario verification through the analytical pipeline…
+        </p>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="text-sm text-red-500 py-8 text-center">
-        Failed to load scenarios. Check the API is running.
-      </div>
+      <Card className="p-8 text-center card-soft border-rose-200 bg-rose-50/40">
+        <AlertTriangle size={24} className="mx-auto text-rose-600 mb-2" />
+        <h3 className="text-base font-bold text-stone-900 mb-1">
+          Scenarios Unavailable
+        </h3>
+        <p className="text-xs text-stone-500 mb-4">
+          Failed to load scenarios. Please verify that the API server is active on port 8000.
+        </p>
+        <Button onClick={load} size="sm" variant="outline" className="cursor-pointer">
+          Try Again
+        </Button>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-8 fade-in">
       {/* Page header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-teal-600 flex items-center justify-center">
-            <Target size={22} className="text-white" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-600 to-teal-800 flex items-center justify-center text-white shadow-soft">
+            <Target size={20} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-3xl font-bold text-stone-900 tracking-tight">
               Reality Check
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Sensor fault vs genuine weather event — two contrasting cases
+            <p className="text-sm text-stone-500 mt-0.5 font-medium">
+              Sensor fault vs genuine meteorological event — side-by-side analysis
             </p>
           </div>
         </div>
@@ -127,31 +142,35 @@ export default function RealityCheckPage() {
           onClick={load}
           disabled={running}
           variant="outline"
-          className="gap-2"
+          className="gap-2 cursor-pointer shadow-xs border-stone-200 hover:bg-stone-50 font-medium"
         >
           {running ? (
-            <Loader2 size={14} className="animate-spin" />
+            <Loader2 size={14} className="animate-spin text-teal-600" />
           ) : (
-            <RefreshCw size={14} />
+            <RefreshCw size={14} className="text-stone-500" />
           )}
           Refresh Scenarios
         </Button>
       </div>
 
-      {/* Explanation */}
-      <Card className="p-5 card-soft bg-gradient-to-r from-teal-50/50 to-transparent">
-        <p className="text-sm text-gray-700 leading-relaxed">
-          An unusual reading can mean two very different things: a{" "}
-          <b className="text-gray-900">faulty sensor</b>, or a{" "}
-          <b className="text-gray-900">genuine atmospheric change</b>.
-          SkyGuard distinguishes between them by comparing the target
-          station to its neighbors and checking whether the reading is
-          physically consistent with atmospheric behavior.
-        </p>
-        <p className="text-xs text-gray-500 mt-3">
-          Two contrasting scenarios below — same pipeline, different
-          conclusions.
-        </p>
+      {/* Explanation banner */}
+      <Card className="p-5 card-soft bg-gradient-to-r from-teal-50/70 via-white to-stone-50/40 border-stone-200/80">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-teal-100/70 border border-teal-200/60 flex items-center justify-center text-teal-700 shrink-0">
+            <Sparkles size={16} />
+          </div>
+          <div>
+            <p className="text-sm text-stone-700 leading-relaxed font-normal">
+              An anomalous reading can signify two fundamentally different phenomena: a{" "}
+              <b className="text-stone-900 font-semibold">hardware sensor fault</b>, or a{" "}
+              <b className="text-stone-900 font-semibold">genuine regional atmospheric change</b>.
+              SkyGuard resolves this ambiguity using spatial neighbor consistency and physical coupling models.
+            </p>
+            <p className="text-xs text-stone-500 mt-2 font-medium">
+              Below are two contrasting cases processed by the exact same pipeline producing divergent diagnostic verdicts.
+            </p>
+          </div>
+        </div>
       </Card>
 
       {/* Comparison grid */}
@@ -169,9 +188,8 @@ export default function RealityCheckPage() {
       </div>
 
       {/* Footer note */}
-      <p className="text-xs text-gray-400 text-center">
-        Case B verdict is illustrated for demonstration. See documentation
-        for current detector coverage of gradual regional events.
+      <p className="text-xs text-stone-400 text-center font-medium">
+        Case B verdict illustrates regional spatial consistency. Case A is live multi-station inference.
       </p>
     </div>
   );
@@ -193,137 +211,166 @@ function ScenarioCard({
   const isWeather = alert.genuine_weather_event;
   const pri = PRIORITY_STYLES[alert.priority] || PRIORITY_STYLES.P3;
 
-  const accentColors =
-    accent === "red"
-      ? { border: "#EF4444", bg: "#FEF2F2" }
-      : { border: "#0F766E", bg: "#F0FDFA" };
+  const isCaseA = accent === "red";
 
   return (
-    <Card
-      className="p-5 card-soft"
-      // border-left color
-    >
+    <Card className="overflow-hidden card-soft rounded-2xl border border-stone-200/80 bg-white shadow-soft">
+      {/* Header: Red-tinted with AlertTriangle for Case A, Green-tinted with CheckCircle for Case B */}
       <div
-        style={{
-          borderLeft: `4px solid ${accentColors.border}`,
-          paddingLeft: 16,
-          marginLeft: -20,
-          marginRight: -20,
-          marginTop: -20,
-          marginBottom: 16,
-          paddingTop: 20,
-          paddingBottom: 20,
-          paddingRight: 20,
-          backgroundColor: accentColors.bg,
-          borderTopRightRadius: 8,
-        }}
+        className={`px-5 py-4 border-b flex items-center justify-between ${
+          isCaseA
+            ? "bg-gradient-to-r from-rose-50 via-rose-50/40 to-transparent border-rose-200/80"
+            : "bg-gradient-to-r from-emerald-50 via-emerald-50/40 to-transparent border-emerald-200/80"
+        }`}
       >
-        <h2 className="text-sm font-bold text-gray-800 mb-0.5">
-          {accent === "red" ? "Case A — " : "Case B — "}
-          <span className="font-normal text-gray-600">
-            {scenario.label.split(": ")[1]}
-          </span>
-        </h2>
-        <p className="text-xs text-gray-500">{timestamp}</p>
-      </div>
-
-      {/* Station readings */}
-      <div className="space-y-1.5 mb-5">
-        {scenario.readings.map((r) => (
+        <div className="flex items-center gap-3">
           <div
-            key={r.station_id}
-            className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded ${
-              r.is_target
-                ? "bg-amber-50 border border-amber-200 font-semibold"
-                : "bg-gray-50"
+            className={`w-9 h-9 rounded-xl flex items-center justify-center border shadow-2xs ${
+              isCaseA
+                ? "bg-rose-100 text-rose-700 border-rose-200"
+                : "bg-emerald-100 text-emerald-700 border-emerald-200"
             }`}
           >
-            <span className="flex items-center gap-1.5 text-gray-700">
-              <MapPin size={11} />
-              {r.station_id}
-              {r.is_target && (
-                <span className="text-amber-700 text-[10px]">← target</span>
-              )}
-            </span>
-            <span className="flex items-center gap-2 text-gray-800">
-              <Thermometer size={11} className="text-red-500" />
-              {r.temperature?.toFixed(1) ?? "—"}°C
+            {isCaseA ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-stone-900 tracking-tight">
+              {isCaseA ? "Case A — Sensor Fault" : "Case B — Weather Event"}
+            </h2>
+            <p className="text-xs text-stone-500 font-medium">
+              {scenario.label.split(": ")[1] || scenario.label}
+            </p>
+          </div>
+        </div>
+
+        <span className="text-[11px] font-mono text-stone-400 bg-white/80 px-2 py-0.5 rounded border border-stone-200/60">
+          {timestamp}
+        </span>
+      </div>
+
+      <div className="p-5 space-y-4">
+        {/* Reading rows: subtle background per row, target row highlighted */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] font-bold text-stone-500 uppercase tracking-wider px-1">
+            <span>Station Network</span>
+            <span>Temperature Reading</span>
+          </div>
+
+          {scenario.readings.map((r) => (
+            <div
+              key={r.station_id}
+              className={`flex items-center justify-between text-xs px-3 py-2 rounded-xl border transition-all ${
+                r.is_target
+                  ? "bg-gradient-to-r from-amber-50 to-amber-100/60 border-amber-300 font-semibold shadow-2xs ring-1 ring-amber-400/20"
+                  : "bg-stone-50/70 border-stone-200/60 text-stone-700 hover:bg-stone-50"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <MapPin
+                  size={12}
+                  className={r.is_target ? "text-amber-700" : "text-stone-400"}
+                />
+                <span className={r.is_target ? "text-stone-900 font-bold" : "text-stone-700"}>
+                  {r.station_id}
+                </span>
+                {r.is_target && (
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-200/70 border border-amber-300/80 px-1.5 py-0.2 rounded-full">
+                    Target Station
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 font-mono">
+                <Thermometer
+                  size={12}
+                  className={r.is_target ? "text-rose-600" : "text-stone-400"}
+                />
+                <span
+                  className={
+                    r.is_target
+                      ? "text-rose-700 font-bold text-sm"
+                      : "text-stone-800 font-medium"
+                  }
+                >
+                  {r.temperature?.toFixed(1) ?? "—"}°C
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Verdict banner: big, bold, colorful */}
+        <div
+          className={`rounded-2xl p-4 border shadow-soft ${
+            isWeather
+              ? "bg-gradient-to-r from-emerald-50 via-teal-50/50 to-emerald-50/30 border-emerald-200/90 text-emerald-950"
+              : "bg-gradient-to-r from-rose-50 via-red-50/50 to-rose-50/30 border-rose-200/90 text-rose-950"
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-1.5">
+            {isWeather ? (
+              <CheckCircle size={18} className="text-emerald-700 shrink-0" />
+            ) : (
+              <AlertTriangle size={18} className="text-rose-700 shrink-0" />
+            )}
+            <span className="text-sm font-extrabold uppercase tracking-wide">
+              {isWeather ? "Genuine Weather Event" : "Sensor Fault Detected"}
             </span>
           </div>
-        ))}
-      </div>
-
-      {/* Verdict */}
-      <div
-        className="rounded-lg p-3 mb-4"
-        style={{
-          backgroundColor: isWeather ? "#D1FAE5" : "#FEE2E2",
-        }}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          {isWeather ? (
-            <CheckCircle size={16} className="text-green-700" />
-          ) : (
-            <AlertTriangle size={16} className="text-red-700" />
-          )}
-          <span
-            className="text-xs font-bold uppercase tracking-wider"
-            style={{ color: isWeather ? "#065F46" : "#991B1B" }}
-          >
-            {isWeather ? "Genuine Weather Event" : "Sensor Fault"}
-          </span>
+          <p className="text-xs leading-relaxed font-medium pl-6">
+            {alert.weather_verdict_reason}
+          </p>
         </div>
-        <p
-          className="text-xs leading-relaxed"
-          style={{ color: isWeather ? "#065F46" : "#7F1D1D" }}
-        >
-          {alert.weather_verdict_reason}
-        </p>
-      </div>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-3 gap-2 mb-4 text-xs">
-        <div>
-          <p className="text-gray-500 mb-0.5">Trust</p>
-          <p className="font-bold text-gray-900">{alert.trust_score}/100</p>
+        {/* Metrics Chips */}
+        <div className="grid grid-cols-3 gap-3 text-xs">
+          <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200/70">
+            <p className="text-[10px] font-bold uppercase text-stone-500 mb-0.5">
+              Trust Score
+            </p>
+            <p className="font-bold text-stone-900 text-sm">{alert.trust_score}/100</p>
+          </div>
+          <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200/70">
+            <p className="text-[10px] font-bold uppercase text-stone-500 mb-0.5">
+              Confidence
+            </p>
+            <p className="font-bold text-stone-900 text-sm">{alert.confidence}/100</p>
+          </div>
+          <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200/70">
+            <p className="text-[10px] font-bold uppercase text-stone-500 mb-0.5">
+              Priority Tier
+            </p>
+            <span
+              className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border ${pri.bg} ${pri.text}`}
+            >
+              {pri.label} ({alert.priority})
+            </span>
+          </div>
         </div>
-        <div>
-          <p className="text-gray-500 mb-0.5">Confidence</p>
-          <p className="font-bold text-gray-900">{alert.confidence}/100</p>
-        </div>
-        <div>
-          <p className="text-gray-500 mb-0.5">Priority</p>
-          <span
-            className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold"
-            style={{ backgroundColor: pri.bg, color: pri.text }}
-          >
-            {pri.label} ({alert.priority})
-          </span>
-        </div>
-      </div>
 
-      {/* Detected as */}
-      <div className="text-xs text-gray-600 mb-4">
-        <span className="text-gray-500">Detected as: </span>
-        <b className="text-gray-900">{alert.anomaly_type}</b>
-      </div>
-
-      {/* Recommended action */}
-      <div className="border-t border-gray-100 pt-3">
-        <p className="text-[11px] text-gray-500 uppercase tracking-wider font-bold mb-1">
-          Recommended Action
-        </p>
-        <p className="text-xs text-gray-700">
-          {alert.maintenance_recommendation}
-        </p>
-      </div>
-
-      {/* Demo override note */}
-      {alert._demo_override && (
-        <div className="mt-3 text-[10px] text-gray-400 italic border-t border-gray-100 pt-2">
-          Demo override — see pipeline notes. Case A is real inference.
+        {/* Detected as info */}
+        <div className="text-xs text-stone-600 bg-stone-50/60 p-2.5 rounded-xl border border-stone-200/60 flex items-center justify-between">
+          <span className="text-stone-500">Anomaly Classification:</span>
+          <b className="text-stone-900 font-semibold">{alert.anomaly_type}</b>
         </div>
-      )}
+
+        {/* Recommended action */}
+        <div className="border-t border-stone-100 pt-3">
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-bold mb-1">
+            Recommended Action
+          </p>
+          <p className="text-xs text-stone-700 leading-relaxed font-medium">
+            {alert.maintenance_recommendation}
+          </p>
+        </div>
+
+        {/* Demo override note */}
+        {alert._demo_override && (
+          <div className="text-[10px] text-stone-400 italic border-t border-stone-100 pt-2 text-center">
+            Demo scenario simulation for contrast.
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
