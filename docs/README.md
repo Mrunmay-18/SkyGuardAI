@@ -437,7 +437,25 @@ Measured end-to-end on the full expanded test set (14,388 readings):
 **Interpretation:** The full pipeline — feature engineering, rule-based QC, spatial consistency, temporal detection, Isolation Forest inference, evidence fusion, classification, scoring, explanation, sensor health, and self-healing — processes one reading in under 1 millisecond. A single commodity instance can serve India's entire ~1,000-station AWS network with roughly three orders of magnitude of headroom.
 
 **Measurement method:** `Measure-Command { python src\backend_output.py }` on a single-core-equivalent instance against `data/test_injected_aws.csv`. This measures end-to-end wall-clock time from CSV load to alerts written to disk — a conservative upper bound on the incremental per-reading cost in a streaming deployment, since it includes one-time startup and file I/O.
+## Real-Time Deployment
 
+The pipeline is designed for streaming deployment, not batch processing:
+
+- **Ingestion** — AWS stations publish readings via MQTT or HTTP every 15 minutes.
+- **Processing** — A stateless service consumes readings and runs the pipeline on each.
+- **Storage** — Alerts are written to `outputs/alerts.json` (or a message queue in production).
+- **Dashboard** — The Next.js frontend polls `/api/alerts` and renders real-time updates.
+
+### Latency budget (per reading)
+
+| Stage | Budget |
+|---|---|
+| Ingestion + queue | ~50 ms |
+| Pipeline processing (measured) | 0.57 ms |
+| Alert write + notification | ~10 ms |
+| **End-to-end** | **<100 ms** |
+
+This supports sub-second alert latency even with network and queue overhead — well within the 15-minute cadence of AWS observations.
 ## Use Cases
 
 ### 1. Aviation weather safety
