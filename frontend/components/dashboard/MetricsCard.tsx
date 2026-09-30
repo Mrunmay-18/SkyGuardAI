@@ -18,16 +18,16 @@ import { Card } from "@/components/ui/card";
 // Values from evaluation/evaluate.py output.
 // Update these when you re-train or re-evaluate the pipeline.
 const METRICS = {
-  precision: 0.78,
-  recall: 0.05,
-  f1: 0.09,
-  falseAlarmRate: 0.0001,
-  confidenceCalibration: 0.86,
-  totalAlerts: 9,
-  truePositives: 7,
-  falsePositives: 2,
-  driftAnomalies: 96,
-  totalAnomalies: 140,
+  precision: 0.91,
+  recall: 0.10,
+  f1: 0.19,
+  falseAlarmRate: 0.0019,
+  confidenceCalibration: 0.92,
+  totalAlerts: 262,
+  truePositives: 239,
+  falsePositives: 23,
+  driftAnomalies: 960,
+  totalAnomalies: 2289,
 };
 
 export default function MetricsCard() {
@@ -126,11 +126,11 @@ export default function MetricsCard() {
       <div className="px-5 py-3.5 bg-gradient-to-r from-amber-50/90 via-amber-50/40 to-transparent border-t border-amber-200/60 text-xs text-amber-900 leading-relaxed flex items-start gap-2.5">
         <Sparkles size={15} className="text-amber-600 shrink-0 mt-0.5" />
         <div>
-          <span className="font-bold text-amber-950">Precision-first design: </span>
-          SkyGuard fires an alert only when multiple detectors corroborate. The{" "}
-          {METRICS.driftAnomalies} of {METRICS.totalAnomalies} drift anomalies
-          require multi-week baseline tracking — a separate detection paradigm
-          planned as future work.
+           <span className="font-bold text-amber-950">Precision-first design: </span>
+          SkyGuard achieves 0.91 precision on {METRICS.totalAnomalies} injected
+          anomalies across 7 fault types. The {METRICS.driftAnomalies} drift
+          anomalies require multi-week baseline tracking — a separate detection
+          paradigm planned as future work.
         </div>
       </div>
 
