@@ -41,10 +41,11 @@ SkyGuard also provides **self-healing corrected values** for detected anomalies,
 
 ---
 
-## New Features (v2.4)
+## New Features (v2.5)
 
+- **Expanded evaluation set** — 2,289 injected anomalies across 7 fault types (precision 0.91, F1 0.19)
 - **Reality Check** — Side-by-side comparison of isolated sensor fault vs genuine weather event
-- **Test AI Lab** — Interactive fault injection with live detection
+- **Test AI Lab** — Interactive fault injection with live detection (sub-second response)
 - **Maintenance Queue** — P1/P2/P3 prioritized work orders with acknowledge buttons
 - **Fault vs Weather dashboard card** — Today's alerts split by root cause
 - **Offline fallback** — Frontend remains functional when backend is unreachable
@@ -180,6 +181,11 @@ bash
 python -m streamlit run app.py
 Opens in browser at http://localhost:8501.
 
+8. Generate expanded evaluation set
+bash
+python injector_expanded.py
+Creates data/test_expanded_aws.csv with 2,289 injected anomalies across 7 fault types.
+
 Detection Pipeline (12 Stages)
 Feature Engineering — per-station raw values + deltas
 
@@ -249,29 +255,63 @@ correction_basis — which neighbors were used
 Design principle: corrected values are advisory, not authoritative. The original reading is preserved; the corrected value is a suggested replacement for manual review.
 
 Results
-Evaluated on the injected test dataset (14,388 rows, 140 injected anomalies):
+SkyGuard was evaluated on two test sets to demonstrate robustness.
 
+Original test set (140 injected anomalies)
 Metric	Value
-Alerts emitted	9
+Alerts emitted	8
 True positives	7
-False positives	2
-Precision	0.78
-Recall	0.05
-F1	0.094
+False positives	1
+Precision	0.875
+Recall	0.050
+F1	0.095
 False alarm rate	0.0001
 Confidence calibration (high)	86%
-Per-anomaly-type detection
-Anomaly type	Injected	Caught
-Temperature Drop	5	✅
-Temperature Spike	5	✅
-Frozen Sensor	24	✅
-Power Failure	4	✅
-Multivariate Inconsistency	6	✅
-Calibration Drift	96	❌ (see below)
-Known limitation — calibration drift
-96 of the 140 injected anomalies are calibration drift, which is invisible to point-wise detectors (Isolation Forest, QC range/persistence, spatial consistency). Drift requires long-term baseline tracking — a distinct detection paradigm planned as future work.
+Expanded test set (2,289 injected anomalies, 7 fault types)
+Metric	Value
+Precision	0.912
+Recall	0.104
+F1	0.187
+Test anomalies	2,289
+False alarm rate	0.0019
+Confidence calibration (high)	92.3%
+Per-type detection (expanded test set)
+Anomaly type	Injected	Detected	Rate
+Temperature spike	23	22	95.7%
+Power failure	44	44	100%
+Temperature drop	23	10	43.5%
+Multivariate inconsistency	240	76	31.7%
+Missing data	280	61	21.8%
+Frozen sensor	719	26	3.6%
+Calibration drift	960	0	0% (future work)
+Per-station detection (expanded test set)
+Station	Alerts	Precision	Recall
+AWS_01	50	0.84	0.09
+AWS_02	49	0.90	0.10
+AWS_03	55	0.87	0.11
+AWS_04	67	0.97	0.14
+AWS_05	41	0.98	0.09
+Confidence calibration (expanded test set)
+Bucket	Alerts	Correct	Accuracy
+High (80–100)	220	203	92.3%
+Medium (50–79)	39	35	89.7%
+Low (0–49)	3	1	33.3% (small sample)
+Design choice — precision over recall
+SkyGuard prioritizes precision over recall by design. It fires alerts only when multiple evidence sources corroborate. This yields 91% precision on the expanded test set with 262 actionable alerts — instead of thousands of noisy alerts.
 
-Design choice: SkyGuard prioritizes precision over recall. It fires alerts only when multiple evidence sources corroborate. This yields 78% precision with 9 actionable alerts, instead of 3,000 alerts with 1.5% precision.
+Reproducing the expanded evaluation:
+
+bash
+python injector_expanded.py
+python src/ml_detector.py
+python src/backend_output.py
+python evaluation/evaluate.py
+Results saved to results/evaluation_summary_expanded.txt and results/evaluation_metrics_expanded.csv.
+
+Known limitation — calibration drift
+960 of the 2,289 injected anomalies are calibration drift, which is invisible to point-wise detectors. Drift requires long-term baseline tracking — a distinct detection paradigm planned as future work.
+
+See the "Calibration Drift — Investigation & Findings" section below for details.
 
 Use Cases
 1. Aviation weather safety
@@ -314,7 +354,7 @@ Persistence requirement (12 consecutive readings)
 Parameter-specific physical validity checks
 
 Validation finding:
-The synthetic benchmark injects calibration drift as a 24-hour linear ramp (+4.0°C over 96 observations, ~0.04°C per reading). This rate is 5–10x smaller than natural 15-minute temperature variation (~0.2–0.5°C per reading) on the same dataset. No window configuration detected the injected drift without also flagging normal diurnal temperature cycles.
+The synthetic benchmark injects calibration drift as a 24-hour linear ramp (+4.0°C over 96 observations, ~0.04°C per reading). This rate is 5–10x smaller than natural 15-minute temperature variation (~0.2–0.5°C per reading). No window configuration detected the injected drift without also flagging normal diurnal temperature cycles.
 
 Outcome:
 The drift detector is retained as an independent evidence source in the architecture but is NOT integrated into the live fusion pipeline on this benchmark, because it produces false positives on natural temperature variation without reliably detecting the injected drift.
@@ -338,6 +378,7 @@ text
 SkyGuard AI/
 ├── api.py                         # FastAPI backend (deployed on Railway)
 ├── app.py                         # Streamlit dashboard (local fallback)
+├── injector_expanded.py           # generates expanded eval set (2,289 anomalies)
 ├── requirements.txt
 ├── README.md
 ├── docs/
@@ -351,15 +392,19 @@ SkyGuard AI/
 ├── data/
 │   ├── normal_aws_data.csv
 │   ├── test_injected_aws.csv
+│   ├── test_expanded_aws.csv      # 2,289 anomalies
 │   ├── station_metadata.csv
 │   └── isolation_forest_predictions.csv
 ├── models/
 │   └── isolation_forest.pkl
 ├── outputs/
-│   └── alerts.json                # 9 alerts
+│   ├── alerts.json                # 8 alerts (original test set)
+│   └── alerts_expanded.json       # 262 alerts (expanded test set)
 ├── results/
 │   ├── evaluation_metrics.csv
-│   └── evaluation_summary.txt
+│   ├── evaluation_summary.txt
+│   ├── evaluation_metrics_expanded.csv
+│   └── evaluation_summary_expanded.txt
 └── src/
     ├── feature_engineering.py
     ├── ml_detector.py
@@ -398,9 +443,8 @@ Multi-source evidence fusion rather than a single model.
 
 Rule-based explanations — transparent and auditable.
 
-Precision over recall — 9 clean alerts beat 3,000 noisy ones.
+Precision over recall — 8 clean alerts beat 3,000 noisy ones.
 
 Config-driven thresholds — no magic numbers; all in dataclasses.
 
 Honest disclaimers — prototype heuristics, not WMO standards.
-

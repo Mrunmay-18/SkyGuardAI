@@ -25,15 +25,35 @@ SkyGuard AI detects anomalies in AWS temperature, pressure, and humidity data us
 
 ## Key Results
 
+### Original test set (140 injected anomalies)
+
 | Metric | Value |
 |---|---|
-| Alerts emitted | 9 |
-| **Precision** | **0.78** |
-| False positives | 2 |
-| True positives | 7 |
+| Alerts emitted | 8 |
+| **Precision** | **0.875** |
+| **Recall** | **0.050** |
+| **F1** | **0.095** |
 | False alarm rate | 0.0001 |
-| Confidence calibration (high) | 86% |
-| Self-healing coverage | 100% of alerts |
+
+### Expanded test set (2,289 injected anomalies, 7 fault types)
+
+| Metric | Value |
+|---|---|
+| **Precision** | **0.912** |
+| **Recall** | **0.104** |
+| **F1** | **0.187** |
+| False alarm rate | 0.0019 |
+| Confidence calibration (high) | **92.3%** |
+
+### Detection highlights (expanded test set)
+
+- Temperature spike: **95.7%**
+- Power failure: **100%**
+- Temperature drop: 43.5%
+- Multivariate inconsistency: 31.7%
+- Missing data: 21.8%
+- Frozen sensor: 3.6%
+- Calibration drift: 0% (documented as future work)
 
 ## Quick Start
 
@@ -70,15 +90,16 @@ SkyGuard AI/
 ├── frontend/               # Next.js dashboard (Vercel)
 ├── data/                   # Synthetic AWS observations
 ├── models/                 # Trained Isolation Forest
-├── outputs/alerts.json     # 9 detected alerts
+├── outputs/                # 8 alerts (original) + 262 (expanded)
 ├── results/                # Evaluation metrics
+├── injector_expanded.py    # generates expanded eval set
 └── src/                    # 12-file detection pipeline
 Design Philosophy
 No ground-truth labels used in training or inference
 
 Multi-source evidence fusion — not just a single model
 
-Precision over recall — 9 clean, actionable alerts beat 3,000 noisy ones
+- Precision over recall — 8 clean, actionable alerts beat 3,000 noisy ones
 
 Rule-based explanations — transparent and auditable
 
