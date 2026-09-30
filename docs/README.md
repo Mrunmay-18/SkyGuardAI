@@ -1,80 +1,139 @@
-🛰️ SkyGuard AI — Full Documentation
-Intelligent Real-Time Anomaly Detection System for Temperature, Pressure, and Humidity Sensors in Automatic Weather Stations (AWS)
+# 🛰️ SkyGuard AI — Full Documentation
 
-Problem Statement ID: 26073
+**Intelligent Real-Time Anomaly Detection System for Temperature, Pressure, and Humidity Sensors in Automatic Weather Stations (AWS)**
 
-Organization: Ministry of Earth Sciences / India Meteorological Department
+- **Problem Statement ID:** 26073
+- **Organization:** Ministry of Earth Sciences / India Meteorological Department
+- **Category:** Software
+- **Theme:** Disaster Management
 
-Category: Software
+---
 
-Theme: Disaster Management
+## Live Demo
 
-Overview
+- **Frontend:** https://sky-guard-ai-gules.vercel.app
+- **Backend API:** https://skyguardai-production.up.railway.app
+- **API Docs:** https://skyguardai-production.up.railway.app/docs
+- **Repository:** https://github.com/Mrunmay-18/SkyGuardAI
+
+### What's Live
+
+- **Dashboard** — Real-time metrics, alerts, charts, map
+- **Reality Check** — Sensor fault vs genuine weather event comparison
+- **Test AI Lab** — Interactive fault injection with live detection
+- **Maintenance Queue** — Prioritized work orders with acknowledge
+- **AWS Network** — Station table with filters
+- **Parameters** — Live charts with station filter
+
+*Frontend works even if backend is down — cached fallback data ships with the app.*
+
+---
+
+## Overview
+
 Automatic Weather Stations (AWS) continuously monitor atmospheric parameters and feed data into weather forecasting, climate monitoring, disaster management, aviation, and agriculture. However, AWS observations often contain anomalies caused by sensor malfunction, communication failures, calibration drift, power fluctuations, harsh environmental conditions, and data corruption.
 
-SkyGuard AI is an AI/ML-based intelligent anomaly detection system that identifies abnormal, inconsistent, or faulty AWS observations in real time using only three parameters: Temperature (°C), Atmospheric Pressure (hPa), and Relative Humidity (%).
+**SkyGuard AI** is an AI/ML-based intelligent anomaly detection system that identifies abnormal, inconsistent, or faulty AWS observations in real time using only three parameters: **Temperature (°C)**, **Atmospheric Pressure (hPa)**, and **Relative Humidity (%)**.
 
-Unlike traditional threshold-based quality control, SkyGuard AI uses multi-source evidence fusion — combining Isolation Forest, rule-based QC, spatial consistency, temporal detection, and rule-based classification — to distinguish genuine meteorological events from sensor/data anomalies while minimizing false alarms.
+Unlike traditional threshold-based quality control, SkyGuard AI uses **multi-source evidence fusion** — combining Isolation Forest, rule-based QC, spatial consistency, temporal detection, and rule-based classification — to distinguish genuine meteorological events from sensor/data anomalies while minimizing false alarms.
 
-SkyGuard also provides self-healing corrected values for detected anomalies, addressing the PS grand challenge of a "self-aware and self-healing weather observation network."
+SkyGuard also provides **self-healing corrected values** for detected anomalies, addressing the PS grand challenge of a *"self-aware and self-healing weather observation network."*
 
-Architecture
+---
+
+## New Features (v2.4)
+
+- **Reality Check** — Side-by-side comparison of isolated sensor fault vs genuine weather event
+- **Test AI Lab** — Interactive fault injection with live detection
+- **Maintenance Queue** — P1/P2/P3 prioritized work orders with acknowledge buttons
+- **Fault vs Weather dashboard card** — Today's alerts split by root cause
+- **Offline fallback** — Frontend remains functional when backend is unreachable
+- **Fast fault injection** — Pre-computed baseline for < 1 second response
+
+---
+
+## API Endpoints
+
+The backend exposes 9 REST endpoints:
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/health` | Service health check |
+| GET | `/api/alerts` | All detected alerts |
+| GET | `/api/alerts/{station_id}` | Alerts for a specific station |
+| GET | `/api/stations` | Station metadata |
+| GET | `/api/observations` | Full observations feed |
+| GET | `/api/observations/{station_id}` | Observations per station |
+| GET | `/api/injection-fault-types` | Available fault types for demo |
+| POST | `/api/inject` | Inject synthetic fault |
+| GET | `/api/reality-check` | Two contrasting scenarios |
+
+**Interactive API docs:** https://skyguardai-production.up.railway.app/docs
+
+---
+
+## Architecture
+┌──────────────────────────────────────────────┐
+│ Raw AWS Observations │
+│ (temperature, pressure, humidity) │
+└──────────────────┬───────────────────────────┘
+│
+┌──────────────────▼───────────────────────────┐
+│ Feature Engineering │
+│ (raw + per-station deltas) │
+└──────────────────┬───────────────────────────┘
+│
+┌───────────────────────────┼───────────────────────────┐
+│ │ │
+▼ ▼ ▼
+┌───────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│ Isolation │ │ Rule-Based QC │ │ Spatial │
+│ Forest │ │ (range, gap, │ │ Consistency │
+│ (unsupervised)│ │ persistence, │ │ (neighbours, │
+│ │ │ internal) │ │ z-score) │
+└───────┬───────┘ └────────┬────────┘ └────────┬────────┘
+│ │ │
+│ │ ┌────────▼────────┐
+│ │ │ Temporal │
+│ │ │ Detector │
+│ │ │ (rolling z) │
+│ │ └────────┬────────┘
+│ │ │
+└──────────────────────────┼───────────────────────────┘
+│
+┌─────────────────▼───────────────────────────┐
+│ Evidence Fusion │
+│ (weighted combination, counter-evidence) │
+└─────────────────┬───────────────────────────┘
+│
+┌─────────────────▼───────────────────────────┐
+│ Anomaly Classification │
+│ (Spike / Drop / Frozen / Drift / Comm / etc)│
+└─────────────────┬───────────────────────────┘
+│
+┌─────────────────▼───────────────────────────┐
+│ Confidence + Severity │
+└─────────────────┬───────────────────────────┘
+│
+┌─────────────────▼───────────────────────────┐
+│ Explanation + Sensor Health │
+│ + Corrected Values (self-healing) │
+│ + Maintenance Recommendation │
+└─────────────────┬───────────────────────────┘
+│
+┌─────────────────▼───────────────────────────┐
+│ outputs/alerts.json │
+└──────────────────────────────────────────────┘
+
 text
-                 ┌──────────────────────────────────────────────┐
-                 │  Raw AWS Observations                        │
-                 │  (temperature, pressure, humidity)           │
-                 └──────────────────┬───────────────────────────┘
-                                    │
-                 ┌──────────────────▼───────────────────────────┐
-                 │  Feature Engineering                         │
-                 │  (raw + per-station deltas)                  │
-                 └──────────────────┬───────────────────────────┘
-                                    │
-        ┌───────────────────────────┼───────────────────────────┐
-        │                           │                           │
-        ▼                           ▼                           ▼
-┌───────────────┐         ┌─────────────────┐         ┌─────────────────┐
-│ Isolation     │         │ Rule-Based QC   │         │ Spatial         │
-│ Forest        │         │ (range, gap,    │         │ Consistency     │
-│ (unsupervised)│         │  persistence,   │         │ (neighbours,    │
-│               │         │  internal)      │         │  z-score)       │
-└───────┬───────┘         └────────┬────────┘         └────────┬────────┘
-        │                          │                           │
-        │                          │                  ┌────────▼────────┐
-        │                          │                  │ Temporal        │
-        │                          │                  │ Detector        │
-        │                          │                  │ (rolling z)     │
-        │                          │                  └────────┬────────┘
-        │                          │                           │
-        └──────────────────────────┼───────────────────────────┘
-                                   │
-                 ┌─────────────────▼───────────────────────────┐
-                 │  Evidence Fusion                             │
-                 │  (weighted combination, counter-evidence)    │
-                 └─────────────────┬───────────────────────────┘
-                                   │
-                 ┌─────────────────▼───────────────────────────┐
-                 │  Anomaly Classification                      │
-                 │  (Spike / Drop / Frozen / Drift / Comm / etc)│
-                 └─────────────────┬───────────────────────────┘
-                                   │
-                 ┌─────────────────▼───────────────────────────┐
-                 │  Confidence + Severity                       │
-                 └─────────────────┬───────────────────────────┘
-                                   │
-                 ┌─────────────────▼───────────────────────────┐
-                 │  Explanation + Sensor Health                 │
-                 │  + Corrected Values (self-healing)           │
-                 │  + Maintenance Recommendation                │
-                 └─────────────────┬───────────────────────────┘
-                                   │
-                 ┌─────────────────▼───────────────────────────┐
-                 │  outputs/alerts.json                         │
-                 └──────────────────────────────────────────────┘
-Installation
-Requires Python 3.11+.
 
-bash
+---
+
+## Installation
+
+Requires **Python 3.11+**.
+
+```bash
 pip install -r requirements.txt
 How to Run
 1. Train the Isolation Forest model
@@ -104,30 +163,24 @@ python src/realtime_simulator.py               # 1.0s delay, windowed around ale
 python src/realtime_simulator.py --delay 0.5   # faster
 python src/realtime_simulator.py --full        # replay all rows
 python src/realtime_simulator.py --limit 500   # first 500 rows only
-5. Streamlit dashboard
+5. Backend API (FastAPI)
+bash
+python api.py
+Runs on http://localhost:8000. Swagger UI at http://localhost:8000/docs.
+
+6. Next.js frontend (React)
+bash
+cd frontend
+npm install
+npm run dev
+Opens in browser at http://localhost:3000. Requires the backend API to be running.
+
+7. Streamlit dashboard (alternative)
 bash
 python -m streamlit run app.py
-Opens in browser at http://localhost:8501. Displays:
+Opens in browser at http://localhost:8501.
 
-Live 15-minute feed
-
-Station map (lat/lon)
-
-Sensor status (ON/OFF per station)
-
-T/H/P time-series charts with anomaly markers
-
-Alerts table + detail panel
-
-Suggested corrected values (self-healing)
-
-Genuine-weather-event contrast
-
-Export CSV / JSON
-
-Replay controls
-
-Detection Pipeline (11 Stages)
+Detection Pipeline (12 Stages)
 Feature Engineering — per-station raw values + deltas
 
 Isolation Forest — unsupervised baseline (contamination=0.02)
@@ -166,12 +219,16 @@ json
   "anomaly_type": "Temperature Drop",
   "confidence": 83,
   "severity": "High",
+  "priority": "P1",
+  "trust_score": 61,
   "reasons": [
     "Isolation Forest flagged this observation as anomalous (score=-0.008).",
     "QC temporal check flagged a large temperature change (d=-7.02).",
     "QC internal consistency check flagged an inconsistent reading (isolated temperature shift (dT=-7.02)).",
     "Temporal detector flagged a sudden temperature change (temporal_z_4=17.69)."
   ],
+  "physical_reasoning": "Temperature dropped by 7.0°C within one interval while pressure and humidity did not show a corresponding change.",
+  "weather_verdict_reason": "Temperature change is not coupled with humidity change — inconsistent with a physical weather event.",
   "sensor_health": "healthy",
   "maintenance_recommendation": "Inspect the affected station/sensor.",
   "corrected_temperature": 17.73,
@@ -195,12 +252,14 @@ Results
 Evaluated on the injected test dataset (14,388 rows, 140 injected anomalies):
 
 Metric	Value
-Alerts emitted	10
+Alerts emitted	9
 True positives	7
-False positives	3
-Precision	0.70
+False positives	2
+Precision	0.78
 Recall	0.05
-F1	0.093
+F1	0.094
+False alarm rate	0.0001
+Confidence calibration (high)	86%
 Per-anomaly-type detection
 Anomaly type	Injected	Caught
 Temperature Drop	5	✅
@@ -212,7 +271,7 @@ Calibration Drift	96	❌ (see below)
 Known limitation — calibration drift
 96 of the 140 injected anomalies are calibration drift, which is invisible to point-wise detectors (Isolation Forest, QC range/persistence, spatial consistency). Drift requires long-term baseline tracking — a distinct detection paradigm planned as future work.
 
-Design choice: SkyGuard prioritizes precision over recall. It fires alerts only when multiple evidence sources corroborate. This yields 70% precision with 10 actionable alerts, instead of 3,000 alerts with 1.5% precision.
+Design choice: SkyGuard prioritizes precision over recall. It fires alerts only when multiple evidence sources corroborate. This yields 78% precision with 9 actionable alerts, instead of 3,000 alerts with 1.5% precision.
 
 Use Cases
 1. Aviation weather safety
@@ -243,41 +302,28 @@ No SHAP/LIME — rule-based reasons used instead. SHAP planned.
 
 Sensor health shows "healthy" for single alerts — because health is a 24-hour per-station status, not per-alert.
 
----
+Calibration Drift — Investigation & Findings
+A dedicated gradual-drift detector was implemented as a sixth evidence source in the SkyGuard architecture (available on the drift-experiment branch, src/drift_detector.py), using:
 
-## Calibration Drift — Investigation & Findings
+Rolling 7-day baseline comparison
 
-A dedicated gradual-drift detector was implemented as a sixth evidence source
-in the SkyGuard architecture (available on the `drift-experiment` branch,
-`src/drift_detector.py`), using:
-- Rolling 7-day baseline comparison
-- Linear regression slope test on the recent window
-- Persistence requirement (12 consecutive readings)
-- Parameter-specific physical validity checks
+Linear regression slope test on the recent window
 
-**Validation finding:**
-The synthetic benchmark injects calibration drift as a 24-hour linear ramp
-(+4.0°C over 96 observations, ~0.04°C per reading). This rate is 5–10x smaller
-than natural 15-minute temperature variation (~0.2–0.5°C per reading) on the
-same dataset. No window configuration detected the injected drift without also
-flagging normal diurnal temperature cycles.
+Persistence requirement (12 consecutive readings)
 
-**Outcome:**
-The drift detector is retained as an independent evidence source in the
-architecture but is NOT integrated into the live fusion pipeline on this
-benchmark, because it produces false positives on natural temperature variation
-without reliably detecting the injected drift.
+Parameter-specific physical validity checks
 
-**Future work:**
-Reliable calibration-drift validation requires multi-week historical data or
-synthetic drift scenarios extending over 7–14 days. Real-world calibration
-drift occurs over weeks to months — the current 24-hour injection timescale
-is too short to distinguish from natural diurnal variation.
+Validation finding:
+The synthetic benchmark injects calibration drift as a 24-hour linear ramp (+4.0°C over 96 observations, ~0.04°C per reading). This rate is 5–10x smaller than natural 15-minute temperature variation (~0.2–0.5°C per reading) on the same dataset. No window configuration detected the injected drift without also flagging normal diurnal temperature cycles.
 
----
+Outcome:
+The drift detector is retained as an independent evidence source in the architecture but is NOT integrated into the live fusion pipeline on this benchmark, because it produces false positives on natural temperature variation without reliably detecting the injected drift.
+
+Future work:
+Reliable calibration-drift validation requires multi-week historical data or synthetic drift scenarios extending over 7–14 days. Real-world calibration drift occurs over weeks to months — the current 24-hour injection timescale is too short to distinguish from natural diurnal variation.
 
 Future Work
-- **Calibration drift detector** — implemented (`drift-experiment` branch); needs multi-week validation data
+Calibration drift detector — implemented (drift-experiment branch); needs multi-week validation data
 
 Edge AI on ESP32 — quantized model, low-power inference
 
@@ -290,10 +336,18 @@ Multi-region scaling — partition by climatological zone
 File Structure
 text
 SkyGuard AI/
-├── app.py                         # Streamlit dashboard
+├── api.py                         # FastAPI backend (deployed on Railway)
+├── app.py                         # Streamlit dashboard (local fallback)
 ├── requirements.txt
+├── README.md
 ├── docs/
 │   └── README.md                  # this file
+├── frontend/                      # Next.js dashboard (deployed on Vercel)
+│   ├── app/                       # 7 pages: dashboard, network, parameters,
+│   │                              # reality-check, test, maintenance, stations
+│   ├── components/                # dashboard + UI components
+│   ├── lib/api.ts                 # typed API client with fallback
+│   └── public/fallback/           # offline cached data
 ├── data/
 │   ├── normal_aws_data.csv
 │   ├── test_injected_aws.csv
@@ -302,7 +356,7 @@ SkyGuard AI/
 ├── models/
 │   └── isolation_forest.pkl
 ├── outputs/
-│   └── alerts.json                # 10 alerts
+│   └── alerts.json                # 9 alerts
 ├── results/
 │   ├── evaluation_metrics.csv
 │   └── evaluation_summary.txt
@@ -318,7 +372,9 @@ SkyGuard AI/
     ├── explainer.py
     ├── sensor_health.py
     ├── backend_output.py
-    └── realtime_simulator.py
+    ├── realtime_simulator.py
+    ├── inject_demo.py             # fault injection (full pipeline)
+    └── inject_demo_fast.py        # fault injection (cached baseline)
 PS Compliance Checklist
 PS Requirement	Status
 Detect anomalies in real-time	✅
@@ -342,9 +398,9 @@ Multi-source evidence fusion rather than a single model.
 
 Rule-based explanations — transparent and auditable.
 
-Precision over recall — 10 clean alerts beat 3,000 noisy ones.
+Precision over recall — 9 clean alerts beat 3,000 noisy ones.
 
 Config-driven thresholds — no magic numbers; all in dataclasses.
 
 Honest disclaimers — prototype heuristics, not WMO standards.
-SkyGuard AI is a prototype. Thresholds are operational heuristics. Do not use for operational decisions without domain calibration.
+
