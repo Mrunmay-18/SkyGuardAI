@@ -82,7 +82,7 @@ def load_predictions(pred_path: str,
 
     # Bare minimum required columns (the rest can be joined or evaluated
     # conditionally).
-        required_min = ["timestamp", "station_id"]
+    required_min = ["timestamp", "station_id"]
     if "predicted_anomaly" not in df.columns and "fused_any_flag" not in df.columns:
         raise ValueError(
             "Neither 'predicted_anomaly' nor 'fused_any_flag' found in predictions file."

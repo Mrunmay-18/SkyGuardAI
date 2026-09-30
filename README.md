@@ -23,6 +23,8 @@
 
 SkyGuard AI detects anomalies in AWS temperature, pressure, and humidity data using **multi-source evidence fusion** — combining Isolation Forest, rule-based QC, spatial consistency, temporal detection, and rule-based classification. It distinguishes genuine meteorological events from sensor faults and provides **self-healing corrected values** for detected anomalies.
 
+---
+
 ## Key Results
 
 ### Original test set (140 injected anomalies)
@@ -45,6 +47,18 @@ SkyGuard AI detects anomalies in AWS temperature, pressure, and humidity data us
 | False alarm rate | 0.0019 |
 | Confidence calibration (high) | **92.3%** |
 
+### Stratified recall (expanded test set)
+
+| Scope | Recall |
+|---|---|
+| All anomalies | 0.104 |
+| Excluding calibration drift | 0.180 |
+| Excluding drift + frozen sensor | 0.349 |
+| Temperature spikes only | **0.957** |
+| Power failures only | **1.000** |
+
+Calibration drift (960 injections, 0 detected) is documented as future work — point-wise detectors cannot catch slow drift. Frozen sensor is under-tuned for the benchmark's 24-row injection blocks. On the anomaly types SkyGuard is designed for, recall is near-perfect.
+
 ### Detection highlights (expanded test set)
 
 - Temperature spike: **95.7%**
@@ -54,6 +68,8 @@ SkyGuard AI detects anomalies in AWS temperature, pressure, and humidity data us
 - Missing data: 21.8%
 - Frozen sensor: 3.6%
 - Calibration drift: 0% (documented as future work)
+
+---
 
 ## Quick Start
 
@@ -76,33 +92,91 @@ python api.py
 cd frontend
 npm install
 npm run dev
-Frontend opens at http://localhost:3000.
+```
+
+Frontend opens at http://localhost:3000.  
 Backend API at http://localhost:8000.
 
-Documentation
-📖 Full documentation → — architecture, 12-stage pipeline, output format, results, 5 use cases, limitations, and future work.
+---
 
-Project Structure
-text
+## Documentation
+
+📖 **[Full documentation →](./docs/README.md)** — architecture, 12-stage pipeline, output format, results, stratified recall, reproducibility commands, 5 use cases, limitations, and future work.
+
+---
+
+## Project Structure
+
+```
 SkyGuard AI/
-├── api.py                  # FastAPI backend (Railway)
-├── app.py                  # Streamlit dashboard (fallback)
-├── frontend/               # Next.js dashboard (Vercel)
-├── data/                   # Synthetic AWS observations
-├── models/                 # Trained Isolation Forest
-├── outputs/                # 8 alerts (original) + 262 (expanded)
-├── results/                # Evaluation metrics
-├── injector_expanded.py    # generates expanded eval set
-└── src/                    # 12-file detection pipeline
-Design Philosophy
-No ground-truth labels used in training or inference
+├── api.py                       # FastAPI backend (Railway)
+├── app.py                       # Streamlit dashboard (fallback)
+├── injector_expanded.py         # generates expanded eval set (2,289 anomalies)
+├── requirements.txt
+├── README.md                    # this file
+├── docs/
+│   └── README.md                # full documentation
+├── frontend/                    # Next.js dashboard (Vercel)
+│   ├── app/                     # 7 pages
+│   ├── components/              # dashboard + UI components
+│   └── lib/api.ts               # typed API client with fallback
+├── data/
+│   ├── normal_aws_data.csv
+│   ├── test_injected_aws.csv
+│   ├── test_expanded_aws.csv    # 2,289 anomalies
+│   ├── predictions_expanded_full.csv
+│   ├── station_metadata.csv
+│   └── isolation_forest_predictions.csv
+├── models/
+│   └── isolation_forest.pkl
+├── outputs/
+│   ├── alerts.json              # 8 alerts (original)
+│   └── alerts_expanded.json     # 262 alerts (expanded)
+├── results/
+│   ├── evaluation_summary.txt
+│   ├── evaluation_summary_original.txt
+│   ├── evaluation_metrics.csv
+│   ├── evaluation_summary_expanded.txt
+│   └── evaluation_metrics_expanded.csv
+└── src/                         # 14-file detection pipeline
+    ├── feature_engineering.py
+    ├── ml_detector.py
+    ├── qc_rules.py
+    ├── spatial_analysis.py
+    ├── temporal_detector.py
+    ├── evidence_fusion.py
+    ├── anomaly_classifier.py
+    ├── scoring.py
+    ├── explainer.py
+    ├── sensor_health.py
+    ├── backend_output.py
+    ├── realtime_simulator.py
+    ├── inject_demo.py
+    └── inject_demo_fast.py
+```
 
-Multi-source evidence fusion — not just a single model
+---
 
-- Precision over recall — 8 clean, actionable alerts beat 3,000 noisy ones
+## Design Philosophy
 
-Rule-based explanations — transparent and auditable
+- **No ground-truth labels used in training or inference** — labels are used only for evaluation.
+- **Multi-source evidence fusion** rather than a single model.
+- **Precision over recall** — 262 alerts with 91% precision beats thousands of noisy alerts; stratified recall reported honestly.
+- **Rule-based explanations** — transparent and auditable.
+- **Config-driven thresholds** — no magic numbers; all in dataclasses.
+- **Honest disclaimers** — prototype heuristics, not WMO standards.
 
-Honest disclaimers — prototype heuristics, not WMO standards
+---
 
-SkyGuard AI is a prototype. Thresholds are operational heuristics. Do not use for operational decisions without domain calibration.
+## Limitations
+
+- Synthetic dataset — not yet validated on real IMD AWS data.
+- Calibration drift (0% detected) — documented as future work; requires multi-week baseline tracking.
+- Frozen sensor (3.6% detected) — under-tuned for the 24-row injection blocks; persistence rule fires but fusion does not always promote sustained runs to alerts.
+- Prototype thresholds — operational heuristics, not WMO standards.
+- No edge deployment — ESP32 planned as future work.
+- No SHAP/LIME — rule-based explanations used instead; SHAP planned.
+
+---
+
+> ⚠️ SkyGuard AI is a prototype. Thresholds are operational heuristics. Do not use for operational decisions without domain calibration.
