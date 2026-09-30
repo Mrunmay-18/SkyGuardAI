@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BASE_URL } from "@/lib/api";
 import {
   Target,
   AlertTriangle,
@@ -76,7 +77,7 @@ export default function RealityCheckPage() {
   async function load() {
     setRunning(true);
     try {
-      const res = await fetch("http://localhost:8000/api/reality-check");
+      const res = await fetch(`${BASE_URL}/reality-check`);
       if (res.ok) {
         const json = await res.json();
         setData(json);
