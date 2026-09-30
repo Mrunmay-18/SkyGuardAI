@@ -56,6 +56,16 @@ SkyGuard AI detects anomalies in AWS temperature, pressure, and humidity data us
 | Excluding drift + frozen sensor | 0.349 |
 | Temperature spikes only | **0.957** |
 | Power failures only | **1.000** |
+### Performance
+
+| Metric | Value |
+|---|---|
+| Per-reading latency | **0.57 ms** |
+| Throughput | **~1,760 readings/sec** |
+| India AWS network load | ~1.11 readings/sec |
+| **Headroom** | **~1,580×** |
+
+A single instance handles the full ~1,000-station AWS network with substantial margin.
 
 Calibration drift (960 injections, 0 detected) is documented as future work — point-wise detectors cannot catch slow drift. Frozen sensor is under-tuned for the benchmark's 24-row injection blocks. On the anomaly types SkyGuard is designed for, recall is near-perfect.
 

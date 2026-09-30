@@ -421,6 +421,22 @@ python evaluation\evaluate.py --predictions data\predictions_expanded_full.csv -
 **Note:** Steps 3 and 6 are essential — `ml_detector.py` must be re-run after swapping `test_injected_aws.csv`, because the Isolation Forest predictions file reflects the last test set processed.
 
 ---
+## Performance
+
+Measured end-to-end on the full expanded test set (14,388 readings):
+
+| Metric | Value |
+|---|---|
+| Total pipeline time | 8.18 s |
+| Readings processed | 14,388 |
+| **Per-reading latency** | **0.57 ms** |
+| **Throughput** | **~1,760 readings/sec** |
+| India AWS network load | ~1.11 readings/sec |
+| **Headroom** | **~1,580×** |
+
+**Interpretation:** The full pipeline — feature engineering, rule-based QC, spatial consistency, temporal detection, Isolation Forest inference, evidence fusion, classification, scoring, explanation, sensor health, and self-healing — processes one reading in under 1 millisecond. A single commodity instance can serve India's entire ~1,000-station AWS network with roughly three orders of magnitude of headroom.
+
+**Measurement method:** `Measure-Command { python src\backend_output.py }` on a single-core-equivalent instance against `data/test_injected_aws.csv`. This measures end-to-end wall-clock time from CSV load to alerts written to disk — a conservative upper bound on the incremental per-reading cost in a streaming deployment, since it includes one-time startup and file I/O.
 
 ## Use Cases
 
