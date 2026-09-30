@@ -1,0 +1,78 @@
+======================================================================
+SkyGuard AI - Evaluation Harness
+======================================================================
+
+INPUT SUMMARY
+  Total rows in predictions CSV      : 14400
+  Total rows evaluated (with labels) : 14400
+  Total actual anomalies             : 2289
+  Total predicted anomalies          : 262
+
+CONFUSION MATRIX
+                    Pred Normal    Pred Anomaly
+  Actual Normal     12088          23            
+  Actual Anomaly    2050           239           
+
+AGGREGATE METRICS
+  TP / FP / FN / TN  : 239 / 23 / 2050 / 12088
+  Precision          : 0.9122
+  Recall             : 0.1044
+  Detection Rate     : 0.1044   (alias of Recall)
+  F1                 : 0.1874
+  False Alarm Rate   : 0.0019
+  Specificity        : 0.9981
+  Accuracy           : 0.8560
+
+TABLE 1 - SENSOR ANOMALY CATEGORIES (is_anomaly == 1)
+  calibration_drift               n_total=  960    n_detected=    0    n_missed=  960    detection_rate=0.0000
+  frozen_sensor                   n_total=  719    n_detected=   26    n_missed=  693    detection_rate=0.0362
+  missing_data                    n_total=  280    n_detected=   61    n_missed=  219    detection_rate=0.2179
+  multivariate_inconsistency      n_total=  240    n_detected=   76    n_missed=  164    detection_rate=0.3167
+  power_failure                   n_total=   44    n_detected=   44    n_missed=    0    detection_rate=1.0000
+  temperature_drop                n_total=   23    n_detected=   10    n_missed=   13    detection_rate=0.4348
+  temperature_spike               n_total=   23    n_detected=   22    n_missed=    1    detection_rate=0.9565
+
+TABLE 2 - WEATHER / NORMAL CATEGORIES (is_anomaly == 0)
+  normal                          n_total=12111    n_flagged_as_anomaly=   23    false_alarm_rate=0.0019
+
+GENUINE WEATHER EVENT ANALYSIS
+  normal_weather_event:
+    n_normal_weather_events (n_total) = 0
+    n_false_alarms_on_weather_events = 0
+    false_alarm_rate_on_weather_events = 0.0000 (n < 5; interpret cautiously)
+  normal:
+    n_normal_weather_events (n_total) = 12111
+    n_false_alarms_on_weather_events = 23
+    false_alarm_rate_on_weather_events = 0.0019
+
+SCORE DISTRIBUTION BY CONFUSION CATEGORY (anomaly_score)
+  TP        n=  239    min=-0.1505    mean=-0.0460    max=0.0993
+  FP        n=   23    min=-0.0862    mean=-0.0323    max=-0.0015
+  FN        n= 2050    min=-0.1505    mean=0.0625    max=0.1183
+  TN        n=12083    min=-0.0576    mean=0.0627    max=0.1274
+
+======================================================================
+PER-SEVERITY BREAKDOWN
+======================================================================
+severity  n_alerts  tp  fp   fn  precision  recall
+    High       193 177  16  124     0.9171  0.5880
+  Medium        40  36   4  678     0.9000  0.0504
+     Low         3   1   2 1163     0.3333  0.0009
+
+======================================================================
+PER-STATION BREAKDOWN
+======================================================================
+station_id  n_alerts  tp  fp  fn  precision  recall
+    AWS_01        50  42   8 418     0.8400  0.0913
+    AWS_02        49  44   5 413     0.8980  0.0963
+    AWS_03        55  48   7 409     0.8727  0.1050
+    AWS_04        67  65   2 386     0.9701  0.1441
+    AWS_05        41  40   1 424     0.9756  0.0862
+
+======================================================================
+CONFIDENCE CALIBRATION
+======================================================================
+confidence_bucket  n_alerts  correct  accuracy
+    High (80-100)       220      203    0.9227
+   Medium (50-79)        39       35    0.8974
+       Low (0-49)         3        1    0.3333
