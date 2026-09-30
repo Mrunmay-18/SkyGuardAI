@@ -3,7 +3,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Radar } from "lucide-react";
+import { Radar, WifiOff } from "lucide-react";
+import { isOfflineMode } from "@/lib/api";
 
 export default function Header() {
   const pathname = usePathname();
@@ -36,6 +37,14 @@ export default function Header() {
           </span>
         </div>
       </Link>
+
+      {/* Offline indicator */}
+      {typeof window !== "undefined" && isOfflineMode() && (
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-[11px] font-medium text-amber-700">
+          <WifiOff size={12} />
+          Offline mode — cached data
+        </div>
+      )}
 
       <nav className="flex items-center gap-1 overflow-x-auto py-1">
         {navLinks.map((link) => {

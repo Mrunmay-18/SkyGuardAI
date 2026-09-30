@@ -1,0 +1,660 @@
+[
+  {
+    "station_id": "AWS_01",
+    "timestamp": "2026-01-03 00:30:00",
+    "temperature": 31.77,
+    "pressure": 1013.33,
+    "humidity": 66.06,
+    "status": "anomaly",
+    "anomaly_type": "Temperature Spike",
+    "confidence": 83,
+    "severity": "High",
+    "reasons": [
+      "Isolation Forest flagged this observation as anomalous (score=-0.007).",
+      "QC temporal check flagged a large temperature change (d=5.92).",
+      "QC internal consistency check flagged an inconsistent reading (isolated temperature shift (dT=5.92).",
+      "Temporal detector flagged a sudden temperature change (temporal_z_4=15.09)."
+    ],
+    "sensor_health": "healthy",
+    "maintenance_recommendation": "Inspect the affected station/sensor.",
+    "priority": "P1",
+    "evidence_breakdown": {
+      "ml_if": {
+        "fired": true,
+        "score": -0.0075,
+        "weight": 1.0
+      },
+      "qc_any": {
+        "fired": true,
+        "count": 2,
+        "weight": 0.7
+      },
+      "temporal": {
+        "fired": true,
+        "z_4": 15.0878,
+        "weight": 1.0
+      },
+      "spatial": {
+        "fired": false,
+        "isolated": false,
+        "weight": 1.2
+      }
+    },
+    "decision_basis": "3 of 4 sources agree: ml_if, qc_any, temporal",
+    "counter_evidence": "none",
+    "counter_reasoning": {
+      "verdict": "inconclusive",
+      "reason": "No spatial counter-evidence available (neighbors insufficient or timestamp mismatch).",
+      "reliability": "high",
+      "reliability_note": "2 nearby stations used for spatial comparison."
+    },
+    "trust_score": 61,
+    "event_class": "sensor_fault",
+    "physical_reasoning": "Temperature changed by 5.9\u00b0C within one reading interval. Natural atmospheric temperature cannot change that fast \u2014 sensor spike signature.",
+    "multivariate_analysis": {
+      "verdict": "physically_implausible",
+      "reason": "Temperature moved +5.9 C while humidity changed only +0.7% (expected down). This violates physical coupling - stronger evidence of sensor fault.",
+      "details": {
+        "temperature_change": 5.919999999999998,
+        "pressure_change": -0.30999999999994543,
+        "humidity_change": 0.6899999999999977
+      }
+    },
+    "genuine_weather_event": false,
+    "weather_verdict_reason": "Temperature change is not coupled with humidity change - inconsistent with a physical weather event.",
+    "defensibility": {
+      "evidence_for_fault": [
+        "ml_if",
+        "qc_any",
+        "temporal"
+      ],
+      "evidence_against_fault": [],
+      "known_limitations": [
+        "Assumes physical coupling rules apply - extreme localized events could produce similar signatures."
+      ],
+      "operator_action": "Review recommended. Original reading preserved.",
+      "confidence_meaning": "Evidence strength, not probability of failure."
+    },
+    "corrected_temperature": 14.04,
+    "corrected_pressure": 1011.6,
+    "corrected_humidity": 72.22,
+    "correction_confidence": 79,
+    "correction_basis": "median of 2 neighbouring station(s) (AWS_04, AWS_02)"
+  },
+  {
+    "station_id": "AWS_02",
+    "timestamp": "2026-01-06 01:45:00",
+    "temperature": 5.609999999999999,
+    "pressure": 1011.77,
+    "humidity": 75.57,
+    "status": "anomaly",
+    "anomaly_type": "Temperature Drop",
+    "confidence": 83,
+    "severity": "High",
+    "reasons": [
+      "Isolation Forest flagged this observation as anomalous (score=-0.002).",
+      "QC temporal check flagged a large temperature change (d=-7.02).",
+      "QC internal consistency check flagged an inconsistent reading (isolated temperature shift (dT=-7.02).",
+      "Temporal detector flagged a sudden temperature change (temporal_z_4=17.69)."
+    ],
+    "sensor_health": "healthy",
+    "maintenance_recommendation": "Inspect the affected station/sensor.",
+    "priority": "P1",
+    "evidence_breakdown": {
+      "ml_if": {
+        "fired": true,
+        "score": -0.002,
+        "weight": 1.0
+      },
+      "qc_any": {
+        "fired": true,
+        "count": 2,
+        "weight": 0.7
+      },
+      "temporal": {
+        "fired": true,
+        "z_4": -17.6894,
+        "weight": 1.0
+      },
+      "spatial": {
+        "fired": false,
+        "isolated": false,
+        "weight": 1.2
+      }
+    },
+    "decision_basis": "3 of 4 sources agree: ml_if, qc_any, temporal",
+    "counter_evidence": "none",
+    "counter_reasoning": {
+      "verdict": "inconclusive",
+      "reason": "No spatial counter-evidence available (neighbors insufficient or timestamp mismatch).",
+      "reliability": "high",
+      "reliability_note": "2 nearby stations used for spatial comparison."
+    },
+    "trust_score": 61,
+    "event_class": "sensor_fault",
+    "physical_reasoning": "Temperature dropped by 7.0\u00b0C within one interval while pressure and humidity did not show a corresponding change \u2014 inconsistent with a physical weather transition.",
+    "multivariate_analysis": {
+      "verdict": "physically_implausible",
+      "reason": "Temperature moved -7.0 C while humidity changed only -0.8% (expected up). This violates physical coupling - stronger evidence of sensor fault.",
+      "details": {
+        "temperature_change": -7.020000000000001,
+        "pressure_change": 0.1999999999999318,
+        "humidity_change": -0.7600000000000051
+      }
+    },
+    "genuine_weather_event": false,
+    "weather_verdict_reason": "Temperature change is not coupled with humidity change - inconsistent with a physical weather event.",
+    "defensibility": {
+      "evidence_for_fault": [
+        "ml_if",
+        "qc_any",
+        "temporal"
+      ],
+      "evidence_against_fault": [],
+      "known_limitations": [
+        "Assumes physical coupling rules apply - extreme localized events could produce similar signatures."
+      ],
+      "operator_action": "Review recommended. Original reading preserved.",
+      "confidence_meaning": "Evidence strength, not probability of failure."
+    },
+    "corrected_temperature": 16.1,
+    "corrected_pressure": 1012.8,
+    "corrected_humidity": 70.17,
+    "correction_confidence": 79,
+    "correction_basis": "median of 2 neighbouring station(s) (AWS_01, AWS_04)"
+  },
+  {
+    "station_id": "AWS_01",
+    "timestamp": "2026-01-19 01:30:00",
+    "temperature": 0.0,
+    "pressure": 0.0,
+    "humidity": 0.0,
+    "status": "anomaly",
+    "anomaly_type": "Temperature Drop",
+    "confidence": 100,
+    "severity": "High",
+    "reasons": [
+      "Isolation Forest flagged this observation as anomalous (score=-0.127).",
+      "QC temporal check flagged a large temperature change (d=-21.20).",
+      "QC range check flagged a value outside operational bounds (pressure out of range [800.0,1100.0]).",
+      "Temporal detector flagged a sudden temperature change (temporal_z_4=22.67).",
+      "Station reading differs from nearby-station evidence."
+    ],
+    "sensor_health": "healthy",
+    "maintenance_recommendation": "Inspect the affected station/sensor.",
+    "priority": "P1",
+    "evidence_breakdown": {
+      "ml_if": {
+        "fired": true,
+        "score": -0.1268,
+        "weight": 1.0
+      },
+      "qc_any": {
+        "fired": true,
+        "count": 2,
+        "weight": 0.7
+      },
+      "temporal": {
+        "fired": true,
+        "z_4": -22.6664,
+        "weight": 1.0
+      },
+      "spatial": {
+        "fired": true,
+        "isolated": true,
+        "weight": 1.2
+      }
+    },
+    "decision_basis": "4 of 4 sources agree: ml_if, qc_any, temporal, spatial",
+    "counter_evidence": "none",
+    "counter_reasoning": {
+      "verdict": "sensor_fault",
+      "reason": "This station deviated from its neighbors while neighbors remained consistent \u2014 isolated sensor signature, not regional weather.",
+      "reliability": "high",
+      "reliability_note": "2 nearby stations used for spatial comparison."
+    },
+    "trust_score": 85,
+    "event_class": "sensor_fault",
+    "physical_reasoning": "Temperature dropped by 21.2\u00b0C within one interval while pressure and humidity did not show a corresponding change \u2014 inconsistent with a physical weather transition.",
+    "multivariate_analysis": {
+      "verdict": "total_collapse",
+      "reason": "All three parameters are exactly zero. No atmospheric state produces this - power or sensor failure.",
+      "details": {
+        "temperature_change": -21.2,
+        "pressure_change": -1013.6,
+        "humidity_change": -67.98
+      }
+    },
+    "genuine_weather_event": false,
+    "weather_verdict_reason": "All parameters collapsed to zero simultaneously. This is a total sensor/power failure, not a weather event.",
+    "defensibility": {
+      "evidence_for_fault": [
+        "ml_if",
+        "qc_any",
+        "temporal",
+        "spatial"
+      ],
+      "evidence_against_fault": [],
+      "known_limitations": [
+        "Assumes physical coupling rules apply - extreme localized events could produce similar signatures."
+      ],
+      "operator_action": "Review recommended. Original reading preserved.",
+      "confidence_meaning": "Evidence strength, not probability of failure."
+    },
+    "corrected_temperature": 15.64,
+    "corrected_pressure": 1013.62,
+    "corrected_humidity": 68.52,
+    "correction_confidence": 71,
+    "correction_basis": "median of 2 neighbouring station(s) (AWS_04, AWS_02)"
+  },
+  {
+    "station_id": "AWS_01",
+    "timestamp": "2026-01-19 01:45:00",
+    "temperature": 0.0,
+    "pressure": 0.0,
+    "humidity": 0.0,
+    "status": "anomaly",
+    "anomaly_type": "Temperature Drop",
+    "confidence": 100,
+    "severity": "High",
+    "reasons": [
+      "Isolation Forest flagged this observation as anomalous (score=-0.037).",
+      "QC range check flagged a value outside operational bounds (pressure out of range [800.0,1100.0]).",
+      "Temporal detector flagged a sudden temperature change (temporal_z_4=21.40).",
+      "Station reading differs from nearby-station evidence."
+    ],
+    "sensor_health": "healthy",
+    "maintenance_recommendation": "Inspect the affected station/sensor.",
+    "priority": "P1",
+    "evidence_breakdown": {
+      "ml_if": {
+        "fired": true,
+        "score": -0.0367,
+        "weight": 1.0
+      },
+      "qc_any": {
+        "fired": true,
+        "count": 1,
+        "weight": 0.7
+      },
+      "temporal": {
+        "fired": true,
+        "z_4": -21.3968,
+        "weight": 1.0
+      },
+      "spatial": {
+        "fired": true,
+        "isolated": true,
+        "weight": 1.2
+      }
+    },
+    "decision_basis": "4 of 4 sources agree: ml_if, qc_any, temporal, spatial",
+    "counter_evidence": "none",
+    "counter_reasoning": {
+      "verdict": "sensor_fault",
+      "reason": "This station deviated from its neighbors while neighbors remained consistent \u2014 isolated sensor signature, not regional weather.",
+      "reliability": "high",
+      "reliability_note": "2 nearby stations used for spatial comparison."
+    },
+    "trust_score": 85,
+    "event_class": "sensor_fault",
+    "physical_reasoning": "Temperature dropped by a large amount within one interval while pressure and humidity did not show a corresponding change \u2014 inconsistent with a physical weather transition.",
+    "multivariate_analysis": {
+      "verdict": "total_collapse",
+      "reason": "All three parameters are exactly zero. No atmospheric state produces this - power or sensor failure.",
+      "details": {
+        "temperature_change": 0.0,
+        "pressure_change": 0.0,
+        "humidity_change": 0.0
+      }
+    },
+    "genuine_weather_event": false,
+    "weather_verdict_reason": "All parameters collapsed to zero simultaneously. This is a total sensor/power failure, not a weather event.",
+    "defensibility": {
+      "evidence_for_fault": [
+        "ml_if",
+        "qc_any",
+        "temporal",
+        "spatial"
+      ],
+      "evidence_against_fault": [],
+      "known_limitations": [
+        "Assumes physical coupling rules apply - extreme localized events could produce similar signatures."
+      ],
+      "operator_action": "Review recommended. Original reading preserved.",
+      "confidence_meaning": "Evidence strength, not probability of failure."
+    },
+    "corrected_temperature": 15.66,
+    "corrected_pressure": 1013.42,
+    "corrected_humidity": 69.7,
+    "correction_confidence": 66,
+    "correction_basis": "median of 2 neighbouring station(s) (AWS_04, AWS_02)"
+  },
+  {
+    "station_id": "AWS_01",
+    "timestamp": "2026-01-19 02:00:00",
+    "temperature": 0.0,
+    "pressure": 0.0,
+    "humidity": 0.0,
+    "status": "anomaly",
+    "anomaly_type": "Temperature Drop",
+    "confidence": 100,
+    "severity": "High",
+    "reasons": [
+      "Isolation Forest flagged this observation as anomalous (score=-0.033).",
+      "QC range check flagged a value outside operational bounds (pressure out of range [800.0,1100.0]).",
+      "Temporal detector flagged a sudden temperature change (temporal_z_4=22.63).",
+      "Station reading differs from nearby-station evidence."
+    ],
+    "sensor_health": "healthy",
+    "maintenance_recommendation": "Inspect the affected station/sensor.",
+    "priority": "P1",
+    "evidence_breakdown": {
+      "ml_if": {
+        "fired": true,
+        "score": -0.033,
+        "weight": 1.0
+      },
+      "qc_any": {
+        "fired": true,
+        "count": 1,
+        "weight": 0.7
+      },
+      "temporal": {
+        "fired": true,
+        "z_4": -22.6266,
+        "weight": 1.0
+      },
+      "spatial": {
+        "fired": true,
+        "isolated": true,
+        "weight": 1.2
+      }
+    },
+    "decision_basis": "4 of 4 sources agree: ml_if, qc_any, temporal, spatial",
+    "counter_evidence": "none",
+    "counter_reasoning": {
+      "verdict": "sensor_fault",
+      "reason": "This station deviated from its neighbors while neighbors remained consistent \u2014 isolated sensor signature, not regional weather.",
+      "reliability": "high",
+      "reliability_note": "2 nearby stations used for spatial comparison."
+    },
+    "trust_score": 85,
+    "event_class": "sensor_fault",
+    "physical_reasoning": "Temperature dropped by a large amount within one interval while pressure and humidity did not show a corresponding change \u2014 inconsistent with a physical weather transition.",
+    "multivariate_analysis": {
+      "verdict": "total_collapse",
+      "reason": "All three parameters are exactly zero. No atmospheric state produces this - power or sensor failure.",
+      "details": {
+        "temperature_change": 0.0,
+        "pressure_change": 0.0,
+        "humidity_change": 0.0
+      }
+    },
+    "genuine_weather_event": false,
+    "weather_verdict_reason": "All parameters collapsed to zero simultaneously. This is a total sensor/power failure, not a weather event.",
+    "defensibility": {
+      "evidence_for_fault": [
+        "ml_if",
+        "qc_any",
+        "temporal",
+        "spatial"
+      ],
+      "evidence_against_fault": [],
+      "known_limitations": [
+        "Assumes physical coupling rules apply - extreme localized events could produce similar signatures."
+      ],
+      "operator_action": "Review recommended. Original reading preserved.",
+      "confidence_meaning": "Evidence strength, not probability of failure."
+    },
+    "corrected_temperature": 16.27,
+    "corrected_pressure": 1013.38,
+    "corrected_humidity": 70.57,
+    "correction_confidence": 71,
+    "correction_basis": "median of 2 neighbouring station(s) (AWS_04, AWS_02)"
+  },
+  {
+    "station_id": "AWS_01",
+    "timestamp": "2026-01-19 02:15:00",
+    "temperature": 0.0,
+    "pressure": 0.0,
+    "humidity": 0.0,
+    "status": "anomaly",
+    "anomaly_type": "Temperature Drop",
+    "confidence": 100,
+    "severity": "High",
+    "reasons": [
+      "Isolation Forest flagged this observation as anomalous (score=-0.033).",
+      "QC range check flagged a value outside operational bounds (pressure out of range [800.0,1100.0]).",
+      "Temporal detector flagged a sudden temperature change (temporal_z_4=21.51).",
+      "Station reading differs from nearby-station evidence."
+    ],
+    "sensor_health": "healthy",
+    "maintenance_recommendation": "Inspect the affected station/sensor.",
+    "priority": "P1",
+    "evidence_breakdown": {
+      "ml_if": {
+        "fired": true,
+        "score": -0.033,
+        "weight": 1.0
+      },
+      "qc_any": {
+        "fired": true,
+        "count": 1,
+        "weight": 0.7
+      },
+      "temporal": {
+        "fired": true,
+        "z_4": -21.5055,
+        "weight": 1.0
+      },
+      "spatial": {
+        "fired": true,
+        "isolated": true,
+        "weight": 1.2
+      }
+    },
+    "decision_basis": "4 of 4 sources agree: ml_if, qc_any, temporal, spatial",
+    "counter_evidence": "none",
+    "counter_reasoning": {
+      "verdict": "sensor_fault",
+      "reason": "This station deviated from its neighbors while neighbors remained consistent \u2014 isolated sensor signature, not regional weather.",
+      "reliability": "high",
+      "reliability_note": "2 nearby stations used for spatial comparison."
+    },
+    "trust_score": 85,
+    "event_class": "sensor_fault",
+    "physical_reasoning": "Temperature dropped by a large amount within one interval while pressure and humidity did not show a corresponding change \u2014 inconsistent with a physical weather transition.",
+    "multivariate_analysis": {
+      "verdict": "total_collapse",
+      "reason": "All three parameters are exactly zero. No atmospheric state produces this - power or sensor failure.",
+      "details": {
+        "temperature_change": 0.0,
+        "pressure_change": 0.0,
+        "humidity_change": 0.0
+      }
+    },
+    "genuine_weather_event": false,
+    "weather_verdict_reason": "All parameters collapsed to zero simultaneously. This is a total sensor/power failure, not a weather event.",
+    "defensibility": {
+      "evidence_for_fault": [
+        "ml_if",
+        "qc_any",
+        "temporal",
+        "spatial"
+      ],
+      "evidence_against_fault": [],
+      "known_limitations": [
+        "Assumes physical coupling rules apply - extreme localized events could produce similar signatures."
+      ],
+      "operator_action": "Review recommended. Original reading preserved.",
+      "confidence_meaning": "Evidence strength, not probability of failure."
+    },
+    "corrected_temperature": 15.7,
+    "corrected_pressure": 1013.41,
+    "corrected_humidity": 71.78,
+    "correction_confidence": 64,
+    "correction_basis": "median of 2 neighbouring station(s) (AWS_04, AWS_02)"
+  },
+  {
+    "station_id": "AWS_01",
+    "timestamp": "2026-01-19 02:30:00",
+    "temperature": 20.05,
+    "pressure": 1014.4,
+    "humidity": 70.38,
+    "status": "anomaly",
+    "anomaly_type": "Temperature Spike",
+    "confidence": 83,
+    "severity": "High",
+    "reasons": [
+      "Isolation Forest flagged this observation as anomalous (score=-0.047).",
+      "QC temporal check flagged a large temperature change (d=20.05).",
+      "Temporal detector flagged a sudden temperature change (temporal_z_4=20.92)."
+    ],
+    "sensor_health": "healthy",
+    "maintenance_recommendation": "Inspect the affected station/sensor.",
+    "priority": "P1",
+    "evidence_breakdown": {
+      "ml_if": {
+        "fired": true,
+        "score": -0.0466,
+        "weight": 1.0
+      },
+      "qc_any": {
+        "fired": true,
+        "count": 1,
+        "weight": 0.7
+      },
+      "temporal": {
+        "fired": true,
+        "z_4": 20.9233,
+        "weight": 1.0
+      },
+      "spatial": {
+        "fired": false,
+        "isolated": false,
+        "weight": 1.2
+      }
+    },
+    "decision_basis": "3 of 4 sources agree: ml_if, qc_any, temporal",
+    "counter_evidence": "none",
+    "counter_reasoning": {
+      "verdict": "inconclusive",
+      "reason": "No spatial counter-evidence available (neighbors insufficient or timestamp mismatch).",
+      "reliability": "high",
+      "reliability_note": "2 nearby stations used for spatial comparison."
+    },
+    "trust_score": 61,
+    "event_class": "sensor_fault",
+    "physical_reasoning": "Temperature changed by 20.1\u00b0C within one reading interval. Natural atmospheric temperature cannot change that fast \u2014 sensor spike signature.",
+    "multivariate_analysis": {
+      "verdict": "total_collapse",
+      "reason": "All parameters collapsed simultaneously (T change +20.1, humidity change +70.4). No atmospheric process produces this combination \u2014 sensor or power failure signature.",
+      "details": {
+        "temperature_change": 20.05,
+        "pressure_change": 1014.4,
+        "humidity_change": 70.38
+      }
+    },
+    "genuine_weather_event": false,
+    "weather_verdict_reason": "All parameters collapsed to zero simultaneously. This is a total sensor/power failure, not a weather event.",
+    "defensibility": {
+      "evidence_for_fault": [
+        "ml_if",
+        "qc_any",
+        "temporal"
+      ],
+      "evidence_against_fault": [],
+      "known_limitations": [
+        "Assumes physical coupling rules apply - extreme localized events could produce similar signatures."
+      ],
+      "operator_action": "Review recommended. Original reading preserved.",
+      "confidence_meaning": "Evidence strength, not probability of failure."
+    },
+    "corrected_temperature": 15.96,
+    "corrected_pressure": 1013.33,
+    "corrected_humidity": 73.63,
+    "correction_confidence": 79,
+    "correction_basis": "median of 2 neighbouring station(s) (AWS_04, AWS_02)"
+  },
+  {
+    "station_id": "AWS_03",
+    "timestamp": "2026-01-22 00:00:00",
+    "temperature": 19.99,
+    "pressure": 1008.59,
+    "humidity": 83.96700000000001,
+    "status": "anomaly",
+    "anomaly_type": "Multivariate Inconsistency",
+    "confidence": 55,
+    "severity": "Medium",
+    "reasons": [
+      "Isolation Forest flagged this observation as anomalous (score=-0.024).",
+      "QC temporal check flagged a large temperature change (d=20.28).",
+      "QC internal consistency check flagged an inconsistent reading (isolated humidity shift (dRH=20.28)."
+    ],
+    "sensor_health": "healthy",
+    "maintenance_recommendation": "Inspect sensor for stuck/frozen value and check sensor health.",
+    "priority": "P2",
+    "evidence_breakdown": {
+      "ml_if": {
+        "fired": true,
+        "score": -0.0243,
+        "weight": 1.0
+      },
+      "qc_any": {
+        "fired": true,
+        "count": 2,
+        "weight": 0.7
+      },
+      "temporal": {
+        "fired": false,
+        "z_4": null,
+        "weight": 1.0
+      },
+      "spatial": {
+        "fired": false,
+        "isolated": false,
+        "weight": 1.2
+      }
+    },
+    "decision_basis": "2 of 4 sources agree: ml_if, qc_any",
+    "counter_evidence": "none",
+    "counter_reasoning": {
+      "verdict": "inconclusive",
+      "reason": "No spatial counter-evidence available (neighbors insufficient or timestamp mismatch).",
+      "reliability": "high",
+      "reliability_note": "2 nearby stations used for spatial comparison."
+    },
+    "trust_score": 41,
+    "event_class": "sensor_fault",
+    "physical_reasoning": "Temperature changed but humidity and pressure did not respond. In real atmospheric transitions, temperature, pressure and humidity change together \u2014 this violates physical coupling.",
+    "multivariate_analysis": {
+      "verdict": "physically_plausible",
+      "reason": "Temperature moved -1.0 C with humidity +20.3% (expected up). Coupling consistent with physical atmospheric behavior.",
+      "details": {
+        "temperature_change": -1.0300000000000011,
+        "pressure_change": 0.3000000000000682,
+        "humidity_change": 20.277000000000015
+      }
+    },
+    "genuine_weather_event": false,
+    "weather_verdict_reason": "Temperature, pressure, and humidity changed in a way that violates physical coupling - cannot be a real atmospheric event.",
+    "defensibility": {
+      "evidence_for_fault": [
+        "ml_if",
+        "qc_any"
+      ],
+      "evidence_against_fault": [],
+      "known_limitations": [
+        "Assumes physical coupling rules apply - extreme localized events could produce similar signatures."
+      ],
+      "operator_action": "Review recommended. Original reading preserved.",
+      "confidence_meaning": "Evidence strength, not probability of failure."
+    },
+    "corrected_temperature": 17.58,
+    "corrected_pressure": 1012.98,
+    "corrected_humidity": 69.79,
+    "correction_confidence": 68,
+    "correction_basis": "median of 2 neighbouring station(s) (AWS_02, AWS_01)"
+  }
+]
