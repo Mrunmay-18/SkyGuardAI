@@ -7,17 +7,26 @@
 **Theme:** Disaster Management
 
 ---
+## What It Does
+
+SkyGuard AI detects anomalies in AWS temperature, pressure, and humidity data using multi-source evidence fusion. It distinguishes sensor faults from genuine weather events.
+
+**Use cases:** Aviation safety · Agriculture · Disaster management · Climate research · Renewable energy · Smart cities → [details](./docs/README.md#use-cases)
+
+---
+
 
 ## Live Demo
 
 | Component | URL |
 |---|---|
 | **Frontend** | https://sky-guard-ai-gules.vercel.app |
-| **Backend API** | https://skyguardai-production.up.railway.app |
+| **Backend API** | https://skyguardai-production.up.railway.app/docs |
 | **API Docs** | https://skyguardai-production.up.railway.app/docs |
 | **Repository** | https://github.com/Mrunmay-18/SkyGuardAI |
 
 ---
+
 
 ## Overview
 
@@ -111,7 +120,15 @@ Backend API at http://localhost:8000.
 
 ## Documentation
 
-📖 **[Full documentation →](./docs/README.md)** — architecture, 12-stage pipeline, output format, results, stratified recall, reproducibility commands, 5 use cases, limitations, and future work.
+📖 **[Full documentation →](./docs/README.md)** — architecture, pipeline, results, and use cases.
+
+### Direct Links
+
+- [**Use Cases** — 6 real-world deployment scenarios](./docs/README.md#use-cases) ← PS requirement
+- [Architecture](./docs/README.md#architecture)
+- [Results & Evaluation](./docs/README.md#results)
+- [How to Run](./docs/README.md#how-to-run)
+- [PS Compliance Checklist](./docs/README.md#ps-compliance-checklist)
 
 ---
 
