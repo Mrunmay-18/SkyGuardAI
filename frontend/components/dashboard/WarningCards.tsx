@@ -16,6 +16,17 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAlerts, type Alert } from "@/lib/api";
+function formatDemoFault(fault: string): string {
+  const map: Record<string, string> = {
+    temperature_spike: "Temperature Spike",
+    temperature_drop: "Temperature Drop",
+    frozen_sensor: "Frozen Sensor",
+    humidity_spike: "Humidity Spike",
+    pressure_drop: "Pressure Drop",
+    total_collapse: "Total Collapse",
+  };
+  return map[fault] || fault;
+}
 
 interface WarningCardsProps {
   onSelect: (alert: Alert) => void;
@@ -278,7 +289,9 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
                       {/* Anomaly type & reasoning */}
                       <div className="mb-3">
                         <p className="text-sm font-semibold text-stone-900 mb-1">
-                          {alert.anomaly_type}
+                          {alert._demo && alert._injected_fault 
+                            ? formatDemoFault(alert._injected_fault) 
+                            : alert.anomaly_type}
                         </p>
                         <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">
                           {alert.physical_reasoning}

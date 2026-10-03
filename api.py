@@ -65,6 +65,11 @@ app.add_middleware(
 # ----------------------------------------------------------------------
 # Helpers
 # ----------------------------------------------------------------------
+# In-memory store for injected alerts (persists for process lifetime; works on ephemeral filesystems like Railway)
+_injected_alerts = []
+
+
+
 def _read_alerts() -> list:
     if not os.path.exists(ALERTS_JSON):
         raise HTTPException(
@@ -73,12 +78,14 @@ def _read_alerts() -> list:
         )
     with open(ALERTS_JSON, "r", encoding="utf-8") as f:
         alerts = json.load(f)
+    # Merge in-memory injected alerts with file-based alerts (ephemeral-fs safe)
+    combined = _injected_alerts + alerts
     # In production (DEMO_MODE unset), hide demo alerts from API responses.
     # Set DEMO_MODE=true for local demo to see injected alerts on the Dashboard.
     demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
     if demo_mode:
-        return alerts
-    return [a for a in alerts if not a.get("_demo", False)]
+        return combined
+    return [a for a in combined if not a.get("_demo", False)]
 
 
 def _read_stations() -> pd.DataFrame:
@@ -177,23 +184,21 @@ def inject_fault(req: InjectionRequest):
             fault_type=req.fault_type,
             magnitude=req.magnitude,
         )
-        # ---- Persist injected alert to alerts.json so Dashboard can see it ----
-        import json, os
-        alerts_path = "outputs/alerts.json"
+        # ---- Add to in-memory store (works on ephemeral filesystems like Railway) ----
+        if isinstance(result, dict) and "alert" in result:
+            _injected_alerts.insert(0, result["alert"])
+        # ---- Also try to write to file (persists locally) ----
         try:
-            os.makedirs("outputs", exist_ok=True)
-            existing = []
+            import json
+            alerts_path = "outputs/alerts.json"
             if os.path.exists(alerts_path):
                 with open(alerts_path, "r") as f:
                     existing = json.load(f)
-            # The injection result has shape {"alert": {...}, ...}
-            # Append the alert object to the top of the list (most recent first)
-            if isinstance(result, dict) and "alert" in result:
                 existing.insert(0, result["alert"])
-            with open(alerts_path, "w") as f:
-                json.dump(existing, f, indent=2, default=str)
+                with open(alerts_path, "w") as f:
+                    json.dump(existing, f, indent=2, default=str)
         except Exception as e:
-            print(f"[inject] Warning: could not persist alert: {e}")
+            print(f"[inject] Could not persist to file: {e}")
         # ----------------------------------------------------------------------
         return result
     except ValueError as e:

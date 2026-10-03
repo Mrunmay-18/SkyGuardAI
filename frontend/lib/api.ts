@@ -73,6 +73,10 @@ export interface Alert {
   multivariate_analysis: MultivariateAnalysis;
   defensibility: Defensibility;
   evidence_breakdown: EvidenceBreakdown;
+  // Demo injection fields (only present on alerts from the Test AI Lab)
+  _demo?: boolean;
+  _injected_fault?: string;
+  _injected_magnitude?: number;
 }
 
 export interface Station {
