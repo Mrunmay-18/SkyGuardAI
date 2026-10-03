@@ -159,56 +159,59 @@ The backend exposes 9 REST endpoints:
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────┐
-│ Raw AWS Observations                         │
-│ (temperature, pressure, humidity)            │
-└──────────────────┬───────────────────────────┘
-                   │
-┌──────────────────▼───────────────────────────┐
-│ Feature Engineering                          │
-│ (raw + per-station deltas)                   │
-└──────────────────┬───────────────────────────┘
-                   │
-       ┌───────────┼───────────┐
-       │           │           │
-       ▼           ▼           ▼
-┌───────────┐ ┌─────────┐ ┌───────────┐
-│ Isolation │ │ Rule-   │ │ Spatial   │
-│ Forest    │ │ Based   │ │ Consis-   │
-│ (unsuper- │ │ QC      │ │ tency     │
-│ vised)    │ │         │ │ (z-score) │
-└─────┬─────┘ └────┬────┘ └─────┬─────┘
-      │            │            │
-      │            │      ┌─────▼──────┐
-      │            │      │ Temporal   │
-      │            │      │ Detector   │
-      │            │      │ (rolling z)│
-      │            │      └─────┬──────┘
-      │            │            │
-      └────────────┼────────────┘
-                   │
-┌──────────────────▼───────────────────────────┐
-│ Evidence Fusion                              │
-│ (weighted combination, counter-evidence)     │
-└──────────────────┬───────────────────────────┘
-                   │
-┌──────────────────▼───────────────────────────┐
-│ Anomaly Classification                       │
-│ (Spike / Drop / Frozen / Drift / Comm / etc) │
-└──────────────────┬───────────────────────────┘
-                   │
-┌──────────────────▼───────────────────────────┐
-│ Confidence + Severity                        │
-└──────────────────┬───────────────────────────┘
-                   │
-┌──────────────────▼───────────────────────────┐
-│ Explanation + Sensor Health + Corrected      │
-│ Values (self-healing) + Maintenance          │
-└──────────────────┬───────────────────────────┘
-                   │
-┌──────────────────▼───────────────────────────┐
-│ outputs/alerts.json                          │
-└──────────────────────────────────────────────┘
+## Architecture
+
+```
+   ┌─────────────────────────┐
+   │   Raw AWS Observations  │
+   │  Temp · Pressure · RH   │
+   └────────────┬────────────┘
+                │
+   ┌────────────▼────────────┐
+   │   Feature Engineering   │
+   │   raw + station deltas  │
+   └────────────┬────────────┘
+                │
+      ┌─────────┼─────────┐
+      │         │         │
+      ▼         ▼         ▼
+ ┌────────┐┌────────┐┌────────┐
+ │Isolat. ││ Rule   ││Spatial │
+ │Forest  ││  QC    ││Consist.│
+ └───┬────┘└───┬────┘└───┬────┘
+     │         │         │
+     │         │    ┌────▼────┐
+     │         │    │Temporal │
+     │         │    │Detector │
+     │         │    └────┬────┘
+     └─────────┼─────────┘
+               │
+   ┌───────────▼───────────┐
+   │   Evidence Fusion     │
+   │ weighted + counter    │
+   └───────────┬───────────┘
+               │
+   ┌───────────▼───────────┐
+   │ Anomaly Classification│
+   │ Spike · Drop · Frozen │
+   └───────────┬───────────┘
+               │
+   ┌───────────▼───────────┐
+   │ Confidence + Severity │
+   └───────────┬───────────┘
+               │
+   ┌───────────▼───────────┐
+   │ Explanation + Health  │
+   │ + Corrected Values    │
+   │ + Maintenance         │
+   └───────────┬───────────┘
+               │
+   ┌───────────▼───────────┐
+   │  outputs/alerts.json  │
+   └───────────────────────┘
+```
+
+Five independent evidence sources feed into a fusion layer. Each source produces a flag or score; fusion combines them into a single alert verdict with counter-evidence suppression.
 ```
 
 ---
