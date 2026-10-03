@@ -28,6 +28,17 @@ import {
   type FaultTypesResponse,
   type InjectionResult,
 } from "@/lib/api";
+function formatDemoFault(fault: string): string {
+  const map: Record<string, string> = {
+    temperature_spike: "Temperature Spike",
+    temperature_drop: "Temperature Drop",
+    frozen_sensor: "Frozen Sensor",
+    humidity_spike: "Humidity Spike",
+    pressure_drop: "Pressure Drop",
+    total_collapse: "Total Collapse",
+  };
+  return map[fault] || fault;
+}
 
 const PRIORITY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   P1: { bg: "bg-rose-50 border-rose-200/80", text: "text-rose-700", label: "Critical" },
@@ -345,7 +356,9 @@ export default function TestPage() {
                   </span>
                 </div>
                 <h3 className="text-xl font-bold text-stone-900 tracking-tight">
-                  {result.alert.anomaly_type}
+                                    {result.alert._demo && result.alert._injected_fault
+                    ? formatDemoFault(result.alert._injected_fault)
+                    : result.alert.anomaly_type}
                 </h3>
                 <p className="text-xs text-stone-500 mt-0.5 font-medium">
                   Timestamp: {result.alert.timestamp}
