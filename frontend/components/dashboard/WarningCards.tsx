@@ -129,6 +129,10 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
       setLoading(false);
     }
     load();
+    // Auto-refresh every 5 seconds so injected alerts appear on the Dashboard
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
+    
   }, []);
 
   function toggleAcknowledge(key: string) {
@@ -173,16 +177,34 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
     );
   }
 
+  const MAX_VISIBLE = 9;
+  
   const grouped = {
     P1: alerts.filter((a) => a.priority === "P1"),
     P2: alerts.filter((a) => a.priority === "P2"),
     P3: alerts.filter((a) => a.priority === "P3"),
   };
 
+  // Limit total visible alerts to MAX_VISIBLE, prioritising P1 > P2 > P3
+  let remaining = MAX_VISIBLE;
+  const p1Visible = grouped.P1.slice(0, remaining);
+  remaining -= p1Visible.length;
+  const p2Visible = grouped.P2.slice(0, remaining);
+  remaining -= p2Visible.length;
+  const p3Visible = grouped.P3.slice(0, remaining);
+
+  const visible = {
+    P1: p1Visible,
+    P2: p2Visible,
+    P3: p3Visible,
+  };
+  const totalAlerts = alerts.length;
+  const shownAlerts = p1Visible.length + p2Visible.length + p3Visible.length;
+
   return (
     <div className="space-y-7">
       {(["P1", "P2", "P3"] as const).map((tier) => {
-        const items = grouped[tier];
+        const items = visible[tier];
         if (items.length === 0) return null;
         const cfg = PRIORITY_CONFIG[tier];
         return (
@@ -270,11 +292,13 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
                           Confidence:{" "}
                           <b className="font-bold">{alert.confidence}</b>
                         </span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200/70 shadow-2xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                          Trust:{" "}
-                          <b className="font-bold">{alert.trust_score}</b>
-                        </span>
+                        {alert.trust_score > 0 && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200/70 shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            Trust:{" "}
+                            <b className="font-bold">{alert.trust_score}</b>
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -314,7 +338,12 @@ export default function WarningCards({ onSelect }: WarningCardsProps) {
             </div>
           </div>
         );
-      })}
+           })}
+      {shownAlerts < totalAlerts && (
+        <div className="text-center text-sm text-stone-500 py-3">
+          Showing {shownAlerts} of {totalAlerts} alerts (prioritised by tier)
+        </div>
+      )}
     </div>
   );
 }

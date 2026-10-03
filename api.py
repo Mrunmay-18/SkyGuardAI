@@ -32,6 +32,24 @@ MAX_OBSERVATIONS = 2000
 
 
 # ----------------------------------------------------------------------
+# Startup: auto-clean demo alerts from alerts.json
+# ----------------------------------------------------------------------
+try:
+    if os.path.exists("outputs/alerts.json"):
+        with open("outputs/alerts.json", "r") as f:
+            _alerts = json.load(f)
+        _clean = [a for a in _alerts if not a.get("_demo", False)]
+        if len(_clean) != len(_alerts):
+            with open("outputs/alerts.json", "w") as f:
+                json.dump(_clean, f, indent=2, default=str)
+            print(f"[startup] Cleaned {len(_alerts) - len(_clean)} demo alerts")
+        else:
+            print(f"[startup] {len(_clean)} alerts loaded (no demo alerts)")
+except Exception as e:
+    print(f"[startup] Warning: could not clean demo alerts: {e}")
+
+
+# ----------------------------------------------------------------------
 # App
 # ----------------------------------------------------------------------
 app = FastAPI(title="SkyGuard AI API", version="1.0.0")
@@ -54,7 +72,13 @@ def _read_alerts() -> list:
             detail=f"Alerts file not found: {ALERTS_JSON}. Run the pipeline first."
         )
     with open(ALERTS_JSON, "r", encoding="utf-8") as f:
-        return json.load(f)
+        alerts = json.load(f)
+    # In production (DEMO_MODE unset), hide demo alerts from API responses.
+    # Set DEMO_MODE=true for local demo to see injected alerts on the Dashboard.
+    demo_mode = os.getenv("DEMO_MODE", "false").lower() == "true"
+    if demo_mode:
+        return alerts
+    return [a for a in alerts if not a.get("_demo", False)]
 
 
 def _read_stations() -> pd.DataFrame:
@@ -153,6 +177,24 @@ def inject_fault(req: InjectionRequest):
             fault_type=req.fault_type,
             magnitude=req.magnitude,
         )
+        # ---- Persist injected alert to alerts.json so Dashboard can see it ----
+        import json, os
+        alerts_path = "outputs/alerts.json"
+        try:
+            os.makedirs("outputs", exist_ok=True)
+            existing = []
+            if os.path.exists(alerts_path):
+                with open(alerts_path, "r") as f:
+                    existing = json.load(f)
+            # The injection result has shape {"alert": {...}, ...}
+            # Append the alert object to the top of the list (most recent first)
+            if isinstance(result, dict) and "alert" in result:
+                existing.insert(0, result["alert"])
+            with open(alerts_path, "w") as f:
+                json.dump(existing, f, indent=2, default=str)
+        except Exception as e:
+            print(f"[inject] Warning: could not persist alert: {e}")
+        # ----------------------------------------------------------------------
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
