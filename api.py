@@ -101,6 +101,14 @@ def _read_stations() -> pd.DataFrame:
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "SkyGuard AI API"}
+@app.get("/api/version")
+def version():
+    return {
+        "code_version": "v2.9-injection-sync",
+        "has_injected_alerts": "_injected_alerts" in globals(),
+        "injected_count": len(_injected_alerts) if "_injected_alerts" in globals() else "undefined",
+        "demo_mode": os.getenv("DEMO_MODE", "not set"),
+    }
 
 
 @app.get("/api/alerts")
