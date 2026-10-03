@@ -1,11 +1,10 @@
 // lib/api.ts — Typed API client with offline fallback
 
-// Use env var if set, otherwise default to the deployed Railway backend.
-// This ensures the production frontend never falls back to localhost.
-const _ENV_URL = process.env.NEXT_PUBLIC_API_URL || "";
-export const BASE_URL = _ENV_URL
-  ? _ENV_URL
-  : "https://skyguardai-production.up.railway.app/api";
+// Hardcoded Railway backend URL.
+// The env var NEXT_PUBLIC_API_URL cannot be set on this Vercel plan
+// (Vercel forces "Secret" type which hides it from the browser).
+// Since this URL is public anyway, hardcoding is safe and reliable.
+export const BASE_URL = "https://skyguardai-production.up.railway.app/api";
 const FALLBACK_ALERTS = "/fallback/alerts.json";
 const FALLBACK_STATIONS = "/fallback/station_metadata.csv";
 const FALLBACK_OBSERVATIONS = "/fallback/observations.csv";
