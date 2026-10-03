@@ -28,7 +28,89 @@
 *Frontend works even if backend is down — cached fallback data ships with the app.*
 
 ---
+## PS Output Deliverables
 
+This repository provides the required PS outputs:
+
+**1. Fully Executable Code**
+- Complete Python anomaly detection pipeline (5 detectors + evidence fusion)
+- Installation and execution instructions (see Quick Start below)
+- Example commands with expected output
+- Real-time replay simulator and FastAPI backend
+- Live demo: [frontend](https://sky-guard-ai-gules.vercel.app) · [backend API](https://skyguardai-production.up.railway.app)
+
+**2. Document Explaining Use Cases**
+- Aviation weather safety
+- Agricultural advisories
+- Disaster management
+- Climate research
+- Renewable energy forecasting
+- (See the full [Use Cases](#use-cases) section below)
+
+**3. Reproducible Evaluation**
+- Both original (140 anomalies) and expanded (2,289 anomalies) test sets
+- Copy-paste command sequences for both
+- Per-type, per-station, and confidence calibration breakdowns
+
+---
+## Quick Start
+
+### 1. Install dependencies
+
+```bash
+pip install -r requirements.txt
+2. Generate model predictions
+bash
+python src/ml_detector.py
+3. Run the full detection pipeline
+bash
+python src/backend_output.py
+This generates the fused predictions and outputs/alerts.json.
+
+4. Evaluate the results
+bash
+python evaluation/evaluate.py
+5. Start the backend API
+bash
+python api.py
+The API runs at http://localhost:8000.
+
+6. Start the frontend
+In a new terminal:
+
+bash
+cd frontend
+npm install
+npm run dev
+The dashboard runs at http://localhost:3000.
+
+For the complete pipeline, real-time replay, API details, evaluation reproduction, and alternative Streamlit dashboard, see How to Run below.
+
+text
+
+**Save.**
+
+**Note:** The order is now correct — model training first, then pipeline.
+
+---
+
+## Change 2 — Expand PS Compliance Checklist
+
+**Scroll to the bottom of `docs/README.md`.** Find the PS Compliance Checklist table.
+
+**Replace these two rows:**
+
+```markdown
+| Fully executable code with example usage | ✅ |
+| Document explaining use cases | ✅ (this file) |
+With:
+
+markdown
+| Fully executable code with example usage | ✅ (see Quick Start + How to Run) |
+| Document explaining various use cases | ✅ (see Use Cases section) |
+Save.
+
+Note: The wording now mirrors the PS's exact phrasing — "Fully executable code with example usage" and "a document explaining various use cases."
 ## Overview
 
 Automatic Weather Stations (AWS) continuously monitor atmospheric parameters and feed data into weather forecasting, climate monitoring, disaster management, aviation, and agriculture. However, AWS observations often contain anomalies caused by sensor malfunction, communication failures, calibration drift, power fluctuations, harsh environmental conditions, and data corruption.
@@ -37,7 +119,7 @@ Automatic Weather Stations (AWS) continuously monitor atmospheric parameters and
 
 Unlike traditional threshold-based quality control, SkyGuard AI uses **multi-source evidence fusion** — combining Isolation Forest, rule-based QC, spatial consistency, temporal detection, and rule-based classification — to distinguish genuine meteorological events from sensor/data anomalies while minimizing false alarms.
 
-SkyGuard also provides **self-healing corrected values** for detected anomalies, addressing the PS grand challenge of a *"self-aware and self-healing weather observation network."*
+SkyGuard also provides **advisory corrected values** (self-healing) for detected anomalies, addressing the PS grand challenge of a *"self-aware and self-healing weather observation network."*
 
 ---
 
@@ -437,6 +519,7 @@ Measured end-to-end on the full expanded test set (14,388 readings):
 **Interpretation:** The full pipeline — feature engineering, rule-based QC, spatial consistency, temporal detection, Isolation Forest inference, evidence fusion, classification, scoring, explanation, sensor health, and self-healing — processes one reading in under 1 millisecond. A single commodity instance can serve India's entire ~1,000-station AWS network with roughly three orders of magnitude of headroom.
 
 **Measurement method:** `Measure-Command { python src\backend_output.py }` on a single-core-equivalent instance against `data/test_injected_aws.csv`. This measures end-to-end wall-clock time from CSV load to alerts written to disk — a conservative upper bound on the incremental per-reading cost in a streaming deployment, since it includes one-time startup and file I/O.
+---
 ## Real-Time Deployment
 
 The pipeline is designed for streaming deployment, not batch processing:
@@ -458,25 +541,56 @@ The pipeline is designed for streaming deployment, not batch processing:
 This supports sub-second alert latency even with network and queue overhead — well within the 15-minute cadence of AWS observations.
 ## Use Cases
 
+
+
+Each use case is presented as **Problem → SkyGuard's role** — a specific failure that undetected AWS anomalies cause, followed by how SkyGuard addresses it.
+
 ### 1. Aviation weather safety
 
-AWS anomalies at airports can cause incorrect wind, visibility, or icing forecasts. SkyGuard flags sensor faults in real time, allowing ground crews to switch to backup instruments before a critical takeoff or landing.
+**Problem:** An undetected calibration drift in an anemometer provides air traffic control with falsely secure crosswind data during landing procedures. Traditional threshold QC accepts readings within normal ranges and misses the drift entirely.
+
+**SkyGuard's role:** Applies baseline-normalized spatial deviation against nearby stations. Catches subtle, gradual calibration drift that static rules miss. Flags the anomaly with a priority tier and suggests a corrected value from neighboring stations — allowing ground crews to switch to backup instruments before a critical takeoff or landing.
 
 ### 2. Agricultural advisories
 
-Farmers rely on temperature and humidity forecasts for irrigation, frost protection, and pest management. A drifting temperature sensor can trigger wrong frost alerts or miss heat-stress warnings. SkyGuard identifies faulty stations and routes advisories to nearest reliable neighbors.
+**Problem:** A stuck temperature sensor fails to warn of an impending frost (causing crop death), or a clogged rain gauge triggers unnecessary, expensive automated irrigation.
+
+**SkyGuard's role:** Cross-references temporal and spatial evidence to detect frozen sensors or physical clogs before automated farming systems execute incorrect decisions. Routes advisories to the nearest reliable neighbors, preserving the accuracy of frost warnings and irrigation schedules.
 
 ### 3. Disaster management
 
-During cyclones and heatwaves, timely ground observations feed evacuation and resource-allocation decisions. Erroneous readings during a crisis can cause misdirected response. SkyGuard's spatial consistency check distinguishes isolated sensor faults from regional weather events.
+**Problem:** A faulty pressure sensor spiking downward triggers a false cyclone evacuation — causing public panic and wasting municipal resources. Conversely, an undetected anomaly during a real cyclone can lead to misdirected response.
+
+**SkyGuard's role:** Uses multi-detector corroboration to distinguish between an isolated hardware fault and a genuine regional weather event. The spatial consistency check confirms whether all neighboring stations are experiencing the same shift (real weather) or only one is (sensor fault). This preserves the reliability of evacuation warnings during critical windows.
 
 ### 4. Climate research
 
-Long-term climate records depend on data integrity across decades. Sensor drift, once embedded in archives, is hard to remove. SkyGuard's per-station health tracking helps data managers flag stations for calibration before systematic bias accumulates.
+**Problem:** Long-term climate records depend on data integrity across decades. Sensor drift, once embedded in archives, is difficult to remove. Baseline-normalized QC misses gradual calibration errors that stay within daily ranges.
+
+**SkyGuard's role:** Per-station health tracking helps data managers flag stations for calibration before systematic bias accumulates. Anomaly reasons per alert provide the audit trail that climate researchers need to validate or exclude specific observations from long-term archives.
 
 ### 5. Renewable energy forecasting
 
-Solar and wind forecasts use AWS temperature, pressure, and humidity as inputs. Faulty readings degrade renewable generation predictions. SkyGuard's real-time alerts let grid operators fall back to neighboring stations during sensor outages.
+**Problem:** Erroneous solar radiation or wind data causes power grids to miscalculate generation capacity — leading to grid instability or financial loss under Deviation Settlement Mechanism penalties.
+
+**SkyGuard's role:** Ensures energy forecasting models are fed only verified, high-confidence meteorological data by combining ML, rule-based QC, and spatial evidence. When a sensor is flagged, corrected values from neighboring stations maintain continuity for the forecasting pipeline.
+
+### 6. Smart cities and urban planning
+
+**Problem:** AWS networks in cities monitor local weather for infrastructure maintenance, urban design, and localized disaster response. Integrated air quality sensors (PM2.5, PM10, CO₂) support public health advisories during pollution events. A faulty sensor can trigger a false pollution alert — or fail to warn of a real episode.
+
+**SkyGuard's role:** Distinguishes genuine pollution events from sensor faults. Prevents health advisories from being issued on corrupted data, and ensures air quality alerts are trustworthy during critical episodes. The same multi-evidence fusion that works for T/P/RH extends naturally to additional sensor channels.
+
+### Use Case → SkyGuard Component Mapping
+
+| Use Case | Anomaly Type Detected | SkyGuard Component | Operator Output |
+|---|---|---|---|
+| Aviation weather | Calibration drift (in-range) | Spatial deviation analysis | P1 alert, corrected value |
+| Agricultural advisories | Frozen sensor, stuck values | QC persistence + temporal | P2 alert, neighbor imputation |
+| Disaster management | Isolated spike vs. regional event | Spatial common-event detection | Fault-vs-weather verdict |
+| Climate research | Long-term sensor degradation | Per-station health tracking | Flag for calibration review |
+| Renewable energy | Erroneous radiation/wind inputs | Multi-source fusion | Corrected values for forecast |
+| Smart cities | Air quality sensor anomalies | Same fusion pipeline (extensible) | Trustworthy public advisories |
 
 ---
 
